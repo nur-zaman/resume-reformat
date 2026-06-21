@@ -39,7 +39,11 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
 
   const path = request.nextUrl.pathname;
-  const isProtected = path === "/dashboard" || path.startsWith("/dashboard/");
+  const isProtected =
+    path === "/dashboard" ||
+    path.startsWith("/dashboard/") ||
+    path === "/editor" ||
+    path.startsWith("/editor/");
 
   if (!data?.claims && isProtected) {
     const url = request.nextUrl.clone();

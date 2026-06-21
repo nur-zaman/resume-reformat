@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getUser } from "@/lib/auth/guards";
 
 /**
@@ -18,9 +19,15 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-2 text-sm text-muted">
           You&apos;re authenticated as{" "}
-          <span className="font-mono text-body">{user?.email}</span>. The resume
-          editor and job tailoring arrive in the next milestones.
+          <span className="font-mono text-body">{user?.email}</span>. Job tailoring
+          arrives in the next milestones.
         </p>
+        <Link
+          href="/editor"
+          className="mt-6 inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-active"
+        >
+          Open the resume editor
+        </Link>
       </div>
     </div>
   );
