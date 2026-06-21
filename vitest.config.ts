@@ -7,7 +7,12 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   // Mirror the tsconfig `@/*` path alias so tests can import like app code does.
   resolve: {
-    alias: { "@": root },
+    alias: {
+      "@": root,
+      // `server-only` throws on import outside a React Server build; map it to the
+      // package's own empty module so server-marked units (e.g. lib/ai) are testable.
+      "server-only": path.resolve(root, "node_modules/server-only/empty.js"),
+    },
   },
   test: {
     environment: "node",

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
-type Variant = "primary" | "secondary";
+type Variant = "primary" | "secondary" | "danger";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
@@ -17,6 +17,9 @@ const variants: Record<Variant, string> = {
   secondary:
     "bg-surface-card text-ink border border-hairline hover:bg-surface-elevated " +
     "disabled:text-muted",
+  danger:
+    "bg-error text-ink hover:bg-error/90 " +
+    "disabled:bg-error/40 disabled:text-muted",
 };
 
 /** Primary = electric-yellow CTA; secondary = dark surface. Per DESIGN.md. */

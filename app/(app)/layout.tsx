@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthState } from "@/lib/auth/guards";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -40,9 +41,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="flex h-16 items-center justify-between border-b border-hairline px-6">
-        <span className="font-mono text-sm tracking-tight text-ink">
+        <Link
+          href="/dashboard"
+          className="font-mono text-sm tracking-tight text-ink hover:text-body-strong"
+        >
           resume<span className="text-primary">/</span>reformatter
-        </span>
+        </Link>
         <div className="flex items-center gap-4">
           <span className="hidden font-mono text-xs text-muted sm:inline">
             {auth.user.email}
