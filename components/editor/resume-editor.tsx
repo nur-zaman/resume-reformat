@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { EditorProvider, useEditorStore } from "./editor-context";
 import { BlockList } from "./block-list";
 import { ReviewQueue } from "./review/proposal";
-import { PreviewPlaceholder } from "./preview-placeholder";
+import { ResumePreview } from "@/components/preview/resume-preview";
 
 /**
  * Client entry point for the resume editor. A server page seeds it with a fixture (and
@@ -56,15 +56,15 @@ function EditorWorkspace() {
   }, [state.doc, state.reviewItems, dispatch]);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-8">
+    <div className="mx-auto flex w-full max-w-[100rem] flex-col gap-4 px-6 py-8">
       <WorkspaceHeader />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(32rem,42rem)]">
         <div className="flex flex-col gap-4">
           <ReviewQueue />
           <BlockList />
         </div>
         <aside className="lg:sticky lg:top-20 lg:self-start">
-          <PreviewPlaceholder />
+          <ResumePreview />
         </aside>
       </div>
     </div>

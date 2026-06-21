@@ -11,7 +11,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // Pure-logic unit tests only (no React/Next runtime). Co-located *.test.ts.
-    include: ["lib/**/*.test.ts"],
+    // Pure-logic units plus renderer snapshot tests. The HTML renderer is snapshotted via
+    // react-dom/server and the PDF via react-pdf's node `renderToBuffer` — both run without
+    // a DOM, so the node environment is kept.
+    include: ["lib/**/*.test.{ts,tsx}", "components/**/*.test.{ts,tsx}"],
   },
 });

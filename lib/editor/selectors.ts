@@ -12,6 +12,15 @@ export function pendingReviewItems(state: EditorState): ReviewItem[] {
   return state.reviewItems.filter((r) => r.status === "pending");
 }
 
+/**
+ * Whether a PDF may be exported (PRD FR-28): blocked while any review item is pending or
+ * orphaned. An orphaned review item — one targeting deleted content — is always still
+ * pending, so it is a subset of the pending set; checking for pending items covers both.
+ */
+export function canExport(state: EditorState): boolean {
+  return pendingReviewItems(state).length === 0;
+}
+
 /** The pending review item targeting a content node, if any (for decorations). */
 export function reviewItemForContentId(
   reviewItems: ReviewItem[],
