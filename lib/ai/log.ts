@@ -7,7 +7,7 @@ import "server-only";
  */
 export type AiLogRecord = {
   requestId: string;
-  event: "parse";
+  event: "parse" | "tailor";
   status: "success" | "error";
   durationMs: number;
   attempts: number;

@@ -122,6 +122,9 @@ export function ResumeCard({
           >
             Open
           </Link>
+          <Link href={`/editor/${id}/tailor`} className={actionBtn}>
+            Tailor
+          </Link>
           <button
             type="button"
             onClick={() => setRenaming(true)}

@@ -1,14 +1,21 @@
 import { newId } from "./ids";
 import { CURRENT_SCHEMA_VERSION } from "./version";
-import { isAllowedUrl, type RichText } from "./richtext";
+import { isAllowedUrl } from "./richtext";
 import {
   createContactItem,
   createEducationEntry,
   createExperienceEntry,
   createLink,
   createSkillCategory,
-  emptyRichText,
 } from "./factory";
+import {
+  bulletsToRichText,
+  cleanStrings,
+  educationEntryHasContent,
+  experienceEntryHasContent,
+  isEmptyDoc,
+  paragraphsToRichText,
+} from "./richtext-build";
 import type {
   Block,
   ContactItem,
@@ -31,49 +38,6 @@ import type { AiParseOutput } from "./parse-schema";
  */
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-type BlockNode = RichText["content"][number];
-type ParagraphNode = Extract<BlockNode, { type: "paragraph" }>;
-
-/** Trim and keep only strings with visible content. */
-function cleanStrings(values: readonly string[]): string[] {
-  return values.map((v) => v.trim()).filter((v) => v.length > 0);
-}
-
-function paragraphNode(text: string): ParagraphNode {
-  return { type: "paragraph", content: [{ type: "text", text }] };
-}
-
-/** A doc of one paragraph per non-empty string (empty doc if none). */
-function paragraphsToRichText(values: readonly string[]): RichText {
-  return { type: "doc", content: cleanStrings(values).map(paragraphNode) };
-}
-
-/**
- * A doc with a single bulletList, one listItem (→ paragraph → text) per non-empty
- * string. Falls back to an empty doc when nothing remains, since `bulletList` requires
- * at least one item.
- */
-function bulletsToRichText(values: readonly string[]): RichText {
-  const items = cleanStrings(values);
-  if (items.length === 0) return emptyRichText();
-  return {
-    type: "doc",
-    content: [
-      {
-        type: "bulletList",
-        content: items.map((text) => ({
-          type: "listItem",
-          content: [paragraphNode(text)],
-        })),
-      },
-    ],
-  };
-}
-
-function isEmptyDoc(body: RichText): boolean {
-  return body.content.length === 0;
-}
 
 function assembleContact(
   input: AiParseOutput["header"]["contacts"][number],
@@ -123,13 +87,7 @@ function assembleExperienceEntries(
         bullets: bulletsToRichText(e.bullets),
       };
     })
-    .filter(
-      (e) =>
-        e.organization !== "" ||
-        e.role !== "" ||
-        e.location !== "" ||
-        !isEmptyDoc(e.bullets),
-    );
+    .filter(experienceEntryHasContent);
 }
 
 function assembleEducationEntries(
@@ -148,13 +106,7 @@ function assembleEducationEntries(
         details: bulletsToRichText(e.details),
       };
     })
-    .filter(
-      (e) =>
-        e.institution !== "" ||
-        e.credential !== "" ||
-        e.location !== "" ||
-        !isEmptyDoc(e.details),
-    );
+    .filter(educationEntryHasContent);
 }
 
 export function assembleResumeDoc(ai: AiParseOutput): GenerationResult {

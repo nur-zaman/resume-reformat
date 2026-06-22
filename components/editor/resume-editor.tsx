@@ -16,29 +16,38 @@ import { ResumePreview } from "@/components/preview/resume-preview";
  * EditorProvider; this component owns the debounced local re-validation and the desktop
  * two-pane layout (editor left, preview right).
  *
- * Optional M4 props let the same editor serve onboarding review and later editing:
- * `onSave` adds an explicit save control; `requireReview` shows the verification banner;
- * `onStartOver` adds a re-paste affordance (onboarding only). When none are passed
- * (the M2/M3 fixture pages), the editor renders exactly as before.
+ * Optional M4/M5 props let the same editor serve onboarding review, tailoring review, and
+ * later editing: `onSave` adds an explicit save control (`saveLabel` names it);
+ * `requireReview` shows the review banner (`reviewNotice` overrides its copy for tailoring);
+ * `onStartOver` adds a re-paste affordance. When none are passed (the M2/M3 fixture pages),
+ * the editor renders exactly as before.
  */
+export type ReviewNotice = { heading: string; body: string };
+
 export function ResumeEditor({
   initialDoc,
   initialReviewItems,
   onSave,
+  saveLabel,
   requireReview = false,
+  reviewNotice,
   onStartOver,
 }: {
   initialDoc: ResumeDoc;
   initialReviewItems: ReviewItem[];
   onSave?: SaveHandler;
+  saveLabel?: string;
   requireReview?: boolean;
+  reviewNotice?: ReviewNotice;
   onStartOver?: () => void;
 }) {
   return (
     <EditorProvider initialDoc={initialDoc} initialReviewItems={initialReviewItems}>
       <EditorWorkspace
         onSave={onSave}
+        saveLabel={saveLabel}
         requireReview={requireReview}
+        reviewNotice={reviewNotice}
         onStartOver={onStartOver}
       />
     </EditorProvider>
@@ -47,11 +56,15 @@ export function ResumeEditor({
 
 function EditorWorkspace({
   onSave,
+  saveLabel,
   requireReview,
+  reviewNotice,
   onStartOver,
 }: {
   onSave?: SaveHandler;
+  saveLabel?: string;
   requireReview: boolean;
+  reviewNotice?: ReviewNotice;
   onStartOver?: () => void;
 }) {
   const { state, dispatch } = useEditorStore();
@@ -82,9 +95,11 @@ function EditorWorkspace({
 
   return (
     <div className="mx-auto flex w-full max-w-[100rem] flex-col gap-4 px-6 py-8">
-      {requireReview && <VerificationBanner onStartOver={onStartOver} />}
+      {requireReview && (
+        <VerificationBanner notice={reviewNotice} onStartOver={onStartOver} />
+      )}
       <WorkspaceHeader hasSave={Boolean(onSave)} />
-      {onSave && <SaveBar onSave={onSave} />}
+      {onSave && <SaveBar onSave={onSave} label={saveLabel} />}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(32rem,42rem)]">
         <div className="flex flex-col gap-4">
           <ReviewQueue />
@@ -102,13 +117,24 @@ function EditorWorkspace({
  * Mandatory pre-save guidance for a freshly parsed draft (PRD §6.1, FR-7). Non-dismissable
  * and uses a non-color indicator (the "Review" label + icon-free text), not yellow alone.
  */
-function VerificationBanner({ onStartOver }: { onStartOver?: () => void }) {
+function VerificationBanner({
+  notice,
+  onStartOver,
+}: {
+  notice?: ReviewNotice;
+  onStartOver?: () => void;
+}) {
   const headingRef = useRef<HTMLParagraphElement>(null);
 
   // Land screen-reader/keyboard focus on the guidance when the review phase mounts.
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
+
+  const heading = notice?.heading ?? "Review before saving";
+  const body =
+    notice?.body ??
+    "We transcribed your resume — we did not invent or fact-check anything. Verify the details, especially dates, names, links, and credentials, before you save.";
 
   return (
     <div
@@ -121,12 +147,9 @@ function VerificationBanner({ onStartOver }: { onStartOver?: () => void }) {
           tabIndex={-1}
           className="text-sm font-semibold text-warning outline-none"
         >
-          Review before saving
+          {heading}
         </p>
-        <p className="mt-1 text-sm text-body">
-          We transcribed your resume — we did not invent or fact-check anything. Verify the
-          details, especially dates, names, links, and credentials, before you save.
-        </p>
+        <p className="mt-1 text-sm text-body">{body}</p>
       </div>
       {onStartOver && (
         <Button variant="secondary" type="button" onClick={onStartOver}>

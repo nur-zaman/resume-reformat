@@ -28,6 +28,32 @@ export function validateResumeInput(raw: string): ResumeInputValidation {
 }
 
 // ---------------------------------------------------------------------------
+// Job description (M5 tailoring input, PRD FR-9)
+// ---------------------------------------------------------------------------
+
+export const MAX_JD_INPUT_CHARS = 40_000;
+
+export type JobDescriptionValidation =
+  | { ok: true; text: string }
+  | { ok: false; reason: "empty" | "too_long"; length: number };
+
+/**
+ * Validate a pasted job description identically on the client counter and the server
+ * action. Same UTF-16 code-unit measure as the resume guard; oversized input is rejected
+ * BEFORE any AI call to protect the free quota.
+ */
+export function validateJobDescriptionInput(raw: string): JobDescriptionValidation {
+  const text = raw.trim();
+  if (text.length === 0) {
+    return { ok: false, reason: "empty", length: 0 };
+  }
+  if (text.length > MAX_JD_INPUT_CHARS) {
+    return { ok: false, reason: "too_long", length: text.length };
+  }
+  return { ok: true, text };
+}
+
+// ---------------------------------------------------------------------------
 // PDF upload (the alternative to pasted text)
 // ---------------------------------------------------------------------------
 

@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_RESUME_INPUT_CHARS,
   MAX_RESUME_PDF_BYTES,
+  MAX_JD_INPUT_CHARS,
   validateResumeInput,
   validateResumePdf,
+  validateJobDescriptionInput,
 } from "./input";
 
 describe("validateResumeInput", () => {
@@ -23,6 +25,27 @@ describe("validateResumeInput", () => {
       ok: false,
       reason: "too_long",
       length: MAX_RESUME_INPUT_CHARS + 1,
+    });
+  });
+});
+
+describe("validateJobDescriptionInput", () => {
+  it("rejects empty and whitespace-only input", () => {
+    expect(validateJobDescriptionInput("")).toEqual({ ok: false, reason: "empty", length: 0 });
+    expect(validateJobDescriptionInput("  \n ")).toEqual({ ok: false, reason: "empty", length: 0 });
+  });
+
+  it("accepts input at exactly the limit and trims it", () => {
+    const atLimit = "a".repeat(MAX_JD_INPUT_CHARS);
+    expect(validateJobDescriptionInput(`  ${atLimit}  `)).toEqual({ ok: true, text: atLimit });
+  });
+
+  it("rejects input one character over the limit, measured after trim", () => {
+    const over = "a".repeat(MAX_JD_INPUT_CHARS + 1);
+    expect(validateJobDescriptionInput(over)).toEqual({
+      ok: false,
+      reason: "too_long",
+      length: MAX_JD_INPUT_CHARS + 1,
     });
   });
 });
