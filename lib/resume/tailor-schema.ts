@@ -37,8 +37,12 @@ const AiProposable = z.object({
   reason: z
     .string()
     .describe(
-      "When proposed=true: one sentence, tied to the job description, naming the added or " +
-        'strengthened claim. Use "" when proposed=false.',
+      "When proposed=true: ONE sentence naming BOTH (1) the specific claim added or " +
+        "strengthened (a metric, tool, scope, or credential) AND (2) the exact requirement " +
+        "or phrase from the job description it matches. " +
+        'Good: "Adds the 40% latency-reduction metric to match the JD\'s performance-' +
+        'optimization requirement." Too generic, never do this: "Improves alignment with ' +
+        'the role." Use "" when proposed=false.',
     ),
 });
 
@@ -63,7 +67,11 @@ const AiTailorExperience = z.object({
     ),
   bulletsReason: z
     .string()
-    .describe('Why proposed, tied to the JD. "" when bulletsProposed=false.'),
+    .describe(
+      "When bulletsProposed=true: ONE sentence naming (1) the specific claim/metric/scope " +
+        "added or strengthened in these bullets AND (2) the exact job-description requirement " +
+        'it matches. "" when bulletsProposed=false.',
+    ),
 });
 
 const AiTailorEducation = z.object({
@@ -80,7 +88,11 @@ const AiTailorEducation = z.object({
     .describe("true if details ADD or strengthen a claim vs the base resume; else false."),
   detailsReason: z
     .string()
-    .describe('Why proposed, tied to the JD. "" when detailsProposed=false.'),
+    .describe(
+      "When detailsProposed=true: ONE sentence naming (1) the specific claim/metric/scope " +
+        "added or strengthened in these details AND (2) the exact job-description requirement " +
+        'it matches. "" when detailsProposed=false.',
+    ),
 });
 
 const AiTailorSkillCategory = z.object({
@@ -109,7 +121,10 @@ const AiTailorNewSection = z.object({
   paragraphs: z.array(z.string()).describe("One plain string per paragraph."),
   reason: z
     .string()
-    .describe("Why this new section helps for the job (tied to the JD)."),
+    .describe(
+      "ONE sentence naming (1) what this new section contributes and (2) the exact " +
+        "job-description requirement it satisfies for this role.",
+    ),
 });
 
 export const AiTailorSchema = z.object({

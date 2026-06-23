@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { AiTailorSchema, type AiTailorOutput } from "@/lib/resume/tailor-schema";
 import type { ResumeDoc } from "@/lib/resume/schema";
 import { getAiConfig } from "./config";
+import { tailorKnobs } from "./generation-config";
 import { classifyAiError, type AiErrorCategory } from "./errors";
 import { buildTailorSystemPrompt, buildTailorUserPrompt } from "./tailor-prompt";
 import { buildRetryFeedback } from "./retry-feedback";
@@ -32,6 +33,10 @@ function defaultGenerate(): GenerateTailorFn {
   const cfg = getAiConfig();
   const provider = createGoogleGenerativeAI({ apiKey: cfg.apiKey });
   const model = provider(cfg.modelId);
+  // Tailoring is the reasoning-heavy step (what to surface, is a unit a proposal, infer the
+  // job), so it gets a little reasoning budget. Gated on the model family (Gemini 3 →
+  // thinkingLevel "low"; 2.5 → temperature + dynamic thinkingBudget). See ./generation-config.
+  const knobs = tailorKnobs(cfg.modelId);
 
   // Keep Gemini's native structured-output mode ON; AiTailorSchema is REQUIRED throughout
   // so the constrained decoder doesn't drop fields. Our explicit feedback-bearing retry is
@@ -43,6 +48,7 @@ function defaultGenerate(): GenerateTailorFn {
       system,
       prompt,
       maxRetries: 0,
+      ...knobs,
     });
     return object;
   };

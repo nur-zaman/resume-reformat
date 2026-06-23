@@ -3,6 +3,7 @@ import { generateObject, type ModelMessage } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { AiParseSchema, type AiParseOutput } from "@/lib/resume/parse-schema";
 import { getAiConfig } from "./config";
+import { parseKnobs } from "./generation-config";
 import { classifyAiError, type AiErrorCategory } from "./errors";
 import {
   buildParseSystemPrompt,
@@ -46,6 +47,9 @@ function defaultGenerate(): GenerateObjectFn {
   const cfg = getAiConfig();
   const provider = createGoogleGenerativeAI({ apiKey: cfg.apiKey });
   const model = provider(cfg.modelId);
+  // Transcription profile: deterministic, minimal reasoning. Gated on the model family
+  // (Gemini 3 → thinkingLevel; 2.5 → temperature + thinkingBudget). See ./generation-config.
+  const knobs = parseKnobs(cfg.modelId);
 
   // Keep Gemini's native structured-output mode ON (the default). It binds the model to
   // our exact field names; with it OFF the model invents its own shape (`company`,
@@ -71,6 +75,7 @@ function defaultGenerate(): GenerateObjectFn {
         messages,
         // Our explicit, feedback-bearing retry is the ONLY retry — protects free quota.
         maxRetries: 0,
+        ...knobs,
       });
       return object;
     }
@@ -81,6 +86,7 @@ function defaultGenerate(): GenerateObjectFn {
       system,
       prompt,
       maxRetries: 0,
+      ...knobs,
     });
     return object;
   };
