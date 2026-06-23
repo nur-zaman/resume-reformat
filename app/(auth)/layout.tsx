@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/ui/wordmark";
 
 /** Centered, responsive surface for sign-in. Landing + auth are the only responsive screens. */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -7,9 +8,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="mb-8 inline-block font-mono text-sm tracking-tight text-muted hover:text-body"
+          aria-label="Resume Reformatter — home"
+          className="mb-8 inline-block text-muted hover:text-body"
         >
-          resume<span className="text-primary">/</span>reformatter
+          <Wordmark iconSize={24} className="text-sm" />
         </Link>
         {children}
       </div>

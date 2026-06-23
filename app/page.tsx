@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -5,6 +6,14 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
       <div className="max-w-xl">
+        <Image
+          src="/logo.png"
+          alt="Resume Reformatter"
+          width={64}
+          height={64}
+          priority
+          className="mx-auto mb-6 rounded-lg"
+        />
         <p className="font-mono text-xs uppercase tracking-widest text-primary">
           Invite only
         </p>

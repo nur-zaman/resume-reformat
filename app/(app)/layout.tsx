@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthState } from "@/lib/auth/guards";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Wordmark } from "@/components/ui/wordmark";
 
 /**
  * Protected shell. Server-side guard branches three ways:
@@ -43,9 +44,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="flex h-16 items-center justify-between border-b border-hairline px-6">
         <Link
           href="/dashboard"
-          className="font-mono text-sm tracking-tight text-ink hover:text-body-strong"
+          aria-label="Resume Reformatter — go to dashboard"
+          className="text-ink hover:text-body-strong"
         >
-          resume<span className="text-primary">/</span>reformatter
+          <Wordmark iconSize={26} className="text-sm" />
         </Link>
         <div className="flex items-center gap-4">
           <span className="hidden font-mono text-xs text-muted sm:inline">
