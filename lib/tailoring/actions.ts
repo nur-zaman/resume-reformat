@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { clientIp } from "@/lib/http/client-ip";
 import { requireAllowlistedUser, AuthorizationError } from "@/lib/auth/guards";
 import { tailorResume } from "@/lib/ai/tailor-resume";
 import type { AiErrorCategory } from "@/lib/ai/errors";
@@ -40,14 +40,6 @@ const TAILOR_ERROR_COPY: Record<AiErrorCategory, string> = {
 
 function tailorError(category: AiErrorCategory, message?: string): TailorState {
   return { status: "error", category, message: message ?? TAILOR_ERROR_COPY[category] };
-}
-
-/** Best-effort client IP for the per-IP limit. Vercel sets `x-forwarded-for`. */
-async function clientIp(): Promise<string> {
-  const h = await headers();
-  const forwarded = h.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
-  return h.get("x-real-ip")?.trim() || "unknown";
 }
 
 export async function tailorResumeAction(

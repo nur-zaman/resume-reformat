@@ -65,9 +65,211 @@ body {
   font-family: var(--font-sans);
 }
 
+/*
+ * Custom scrollbars — the OS default (chunky light-gray) clashes with the dark
+ * chrome. Render a thin, low-contrast bar that recedes until hovered. Firefox +
+ * modern engines read the standard properties; WebKit/Blink use the pseudo-element
+ * rules below. The light resume paper sheet never scrolls itself (its dark pane
+ * does), so applying this globally is safe.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-hairline-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-hairline-strong);
+  border-radius: var(--radius-pill);
+  /* Transparent border + background-clip insets the thumb so it reads as a
+     floating pill rather than a full-width bar. */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted-soft);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Accessible, brand-consistent focus ring for keyboard users (PRD a11y). */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
+}
+
+/* ===========================================================================
+ * Landing page — decorative background, scroll progress, and scroll reveals.
+ *
+ * Everything here is the marketing surface only (`app/page.tsx`). Each background
+ * layer is purely decorative (the markup is aria-hidden + pointer-events:none) and
+ * all motion is opt-in: it lives behind prefers-reduced-motion and, for the newest
+ * CSS, an @supports gate. Colours reference the @theme tokens above so the page
+ * stays inside the design system. No JS animation library is involved.
+ * =========================================================================== */
+
+/* Fixed stack of decorative layers, pinned behind the page content (which sits in a
+ * `relative z-10` wrapper). Keeps the canvas colour so there is never a flash. */
+.lp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--color-canvas);
+}
+
+/* Engineered grid texture (Linear/Vercel-style), masked so it dissolves toward the
+ * edges and never competes with copy. Drifts diagonally over 40s for subliminal life. */
+.lp-grid {
+  position: absolute;
+  inset: -2px;
+  background-image:
+    linear-gradient(to right, #ffffff0a 1px, transparent 1px),
+    linear-gradient(to bottom, #ffffff0a 1px, transparent 1px);
+  background-size: 58px 58px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, #000 50%, transparent 100%);
+  mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, #000 50%, transparent 100%);
+}
+
+/* Soft brand-coloured glows. `screen` blends them additively onto the near-black base
+ * so they read as emitted light rather than painted shapes. */
+.lp-blob {
+  position: absolute;
+  border-radius: var(--radius-pill);
+  filter: blur(96px);
+  mix-blend-mode: screen;
+}
+.lp-blob--primary {
+  width: 48rem;
+  height: 48rem;
+  top: -18rem;
+  left: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--color-primary) 26%, transparent) 0%,
+    transparent 62%
+  );
+  transform: translate3d(-52%, 0, 0);
+}
+.lp-blob--blue {
+  width: 34rem;
+  height: 34rem;
+  top: -4rem;
+  right: -8rem;
+  opacity: 0.7;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--color-accent-blue) 24%, transparent) 0%,
+    transparent 66%
+  );
+}
+
+/* Grain overlay — tiny SVG fractal noise. Its real job is to break up the colour
+ * banding that big blurred dark gradients produce on near-black. Never animated. */
+.lp-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Thin scroll-progress bar in brand yellow, driven entirely by the scroll position via
+ * a CSS scroll timeline — no JS, runs off the main thread. Non-supporting browsers
+ * (stable Firefox today) simply show nothing, which is fine for a decorative indicator. */
+.lp-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 60;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: var(--color-primary);
+}
+
+@keyframes lp-grid-pan {
+  to {
+    background-position: 58px 58px, 58px 58px;
+  }
+}
+@keyframes lp-drift-primary {
+  to {
+    transform: translate3d(-44%, 5%, 0) scale(1.12);
+  }
+}
+@keyframes lp-drift-blue {
+  to {
+    transform: translate3d(-8%, 7%, 0) scale(1.14);
+  }
+}
+@keyframes lp-grow {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-grid {
+    animation: lp-grid-pan 40s linear infinite;
+  }
+  .lp-blob--primary {
+    animation: lp-drift-primary 24s ease-in-out infinite alternate;
+  }
+  .lp-blob--blue {
+    animation: lp-drift-blue 30s ease-in-out infinite alternate;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .lp-progress {
+      animation-name: lp-grow;
+      animation-timeline: scroll(root block);
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+    }
+  }
+
+  /* Scroll reveal. The data-reveal attribute is ONLY ever applied by JS (the <Reveal>
+   * island sets "hidden" before paint, then "shown" on intersection), so server-rendered,
+   * no-JS and reduced-motion output carries no attribute and stays fully visible — content
+   * is never gated on a transition. The transition lives on "shown" only, so entering the
+   * "hidden" state is instant (no fade-out flicker); the move into "shown" animates. */
+  [data-reveal="hidden"] {
+    opacity: 0;
+    transform: translateY(var(--reveal-y, 22px));
+  }
+  [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+  }
+}
+
+/* Global safety net: neutralize any stray decorative motion for reduced-motion users.
+ * Reveal content stays visible (its hidden state is gated above), so this only strips
+ * movement, never information. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

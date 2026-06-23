@@ -6,7 +6,12 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ rpc }),
 }));
 
-import { enforceGenerationRateLimit } from "./index";
+import {
+  enforceGenerationRateLimit,
+  enforceWaitlistRateLimit,
+  WAITLIST_IP_LIMIT,
+  WAITLIST_WINDOW_SECONDS,
+} from "./index";
 
 const allow = { data: true, error: null };
 const deny = { data: false, error: null };
@@ -45,5 +50,30 @@ describe("enforceGenerationRateLimit", () => {
     const result = await enforceGenerationRateLimit({ userId: "u1", ip: "1.2.3.4" });
 
     expect(result).toEqual({ allowed: true });
+  });
+});
+
+describe("enforceWaitlistRateLimit", () => {
+  it("allows under the per-IP limit and keys/scopes the window to the waitlist", async () => {
+    rpc.mockResolvedValue(allow);
+    const result = await enforceWaitlistRateLimit("1.2.3.4");
+
+    expect(result).toEqual({ allowed: true });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc.mock.calls[0][1]).toMatchObject({
+      p_key: "waitlist:ip:1.2.3.4",
+      p_limit: WAITLIST_IP_LIMIT,
+      p_window_seconds: WAITLIST_WINDOW_SECONDS,
+    });
+  });
+
+  it("denies once the per-IP limit is exceeded", async () => {
+    rpc.mockResolvedValue(deny);
+    expect(await enforceWaitlistRateLimit("1.2.3.4")).toEqual({ allowed: false });
+  });
+
+  it("fails open when the limiter errors", async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: "XX000" } });
+    expect(await enforceWaitlistRateLimit("1.2.3.4")).toEqual({ allowed: true });
   });
 });

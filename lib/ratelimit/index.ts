@@ -15,13 +15,23 @@ export const GENERATION_WINDOW_SECONDS = 60 * 60; // 1 hour
 export const GENERATION_USER_LIMIT = 20;
 export const GENERATION_IP_LIMIT = 40;
 
-async function underLimit(key: string, limit: number): Promise<boolean> {
+// Public waitlist sign-up is unauthenticated, so it's only guarded per-IP and on a much
+// shorter window than generation — enough to stop a script hammering the endpoint without
+// blocking a household behind one NAT from a few honest retries.
+export const WAITLIST_WINDOW_SECONDS = 60 * 10; // 10 minutes
+export const WAITLIST_IP_LIMIT = 5;
+
+async function underLimit(
+  key: string,
+  limit: number,
+  windowSeconds: number = GENERATION_WINDOW_SECONDS,
+): Promise<boolean> {
   try {
     const admin = createAdminClient();
     const { data, error } = await admin.rpc("check_rate_limit", {
       p_key: key,
       p_limit: limit,
-      p_window_seconds: GENERATION_WINDOW_SECONDS,
+      p_window_seconds: windowSeconds,
     });
     if (error) {
       console.error("rate_limit_check_failed", { code: error.code });
@@ -46,4 +56,14 @@ export async function enforceGenerationRateLimit(input: {
   if (!userOk) return { allowed: false };
   const ipOk = await underLimit(`gen:ip:${input.ip}`, GENERATION_IP_LIMIT);
   return { allowed: ipOk };
+}
+
+/**
+ * Per-IP limit for the public waitlist form. Same fail-open contract as generation: a
+ * limiter outage should never block a genuine sign-up — the unique email constraint is the
+ * real backstop against duplicates.
+ */
+export async function enforceWaitlistRateLimit(ip: string): Promise<{ allowed: boolean }> {
+  const ok = await underLimit(`waitlist:ip:${ip}`, WAITLIST_IP_LIMIT, WAITLIST_WINDOW_SECONDS);
+  return { allowed: ok };
 }
