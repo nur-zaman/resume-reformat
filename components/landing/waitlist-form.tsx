@@ -70,7 +70,7 @@ export function WaitlistForm({
           aria-invalid={errored}
           aria-describedby={errored ? msgId : undefined}
           className={cn(
-            "h-11 min-w-0 flex-1 rounded-md px-4 text-sm outline-none sm:rounded-pill sm:bg-transparent",
+            "h-11 min-w-0 flex-1 rounded-md px-4 text-sm outline-none sm:rounded-pill sm:bg-transparent py-2.5",
             onYellow
               ? "border border-on-primary/25 bg-on-primary/5 text-on-primary placeholder:text-on-primary/50 sm:border-0"
               : "border border-hairline bg-surface-card text-ink placeholder:text-muted sm:border-0",
@@ -91,7 +91,7 @@ export function WaitlistForm({
           disabled={pending}
           aria-busy={pending}
           className={cn(
-            "inline-flex h-11 min-w-[8.5rem] items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold",
+            "inline-flex h-11 min-w-34 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold",
             "transition-colors disabled:cursor-not-allowed sm:rounded-pill",
             onYellow
               ? "bg-canvas text-ink hover:bg-surface-elevated disabled:bg-surface-card disabled:text-muted"
