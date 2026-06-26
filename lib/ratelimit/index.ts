@@ -45,6 +45,32 @@ async function underLimit(
 }
 
 /**
+ * Read whether the per-user generation quota is currently exhausted WITHOUT counting a hit
+ * (backed by `public.peek_rate_limit`). Used by the dashboard to surface the "AI paused"
+ * banner. Fails CLOSED to "not paused": a limiter hiccup should never nag a user that the AI
+ * is off when it may not be — the real enforcement still happens at generation time.
+ */
+export async function isGenerationPausedForUser(userId: string): Promise<boolean> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.rpc("peek_rate_limit", {
+      p_key: `gen:user:${userId}`,
+      p_limit: GENERATION_USER_LIMIT,
+      p_window_seconds: GENERATION_WINDOW_SECONDS,
+    });
+    if (error) {
+      console.error("rate_limit_peek_failed", { code: error.code });
+      return false;
+    }
+    // peek_rate_limit returns true when still UNDER the limit; paused is the inverse.
+    return data === false;
+  } catch (err) {
+    console.error("rate_limit_peek_client_failed", err);
+    return false;
+  }
+}
+
+/**
  * Enforce both generation limits. Checks the per-user key first (the primary control), then
  * the per-IP key. Each call counts one hit against its window.
  */

@@ -13,9 +13,11 @@ import {
 } from "./input";
 import type { ParseSource } from "@/lib/ai/parse-resume";
 import { assembleResumeDoc } from "./assemble";
-import { validateParseResult, validateResumeDoc } from "./validate";
+import { validateParseResult, validateResumeDoc, validateWorkingDoc } from "./validate";
+import { resolveStoredResume } from "./load";
 import { deriveResumeTitle } from "./title";
-import type { GenerationResult } from "./schema";
+import { tailoredStatusFor, type ResumeKind } from "./status";
+import type { GenerationResult, ResumeDoc, ReviewItem } from "./schema";
 
 /**
  * Server actions for resume parsing and the resume CRUD that backs the dashboard. Every
@@ -132,13 +134,24 @@ function sanitizeTitle(raw: string): string {
 }
 
 /**
- * Create a new resume row. Used by onboarding (a reviewed parse draft) and by the
- * dashboard's "Start blank" (an empty doc). The doc is validated before any write, so an
- * invalid document is never persisted. Title falls back to the header name, then a default.
+ * Create a new resume row. Used by onboarding and "Start blank" (a `base` resume) and by the
+ * tailoring flow (a `tailored` resume carrying its job metadata + reviewed proposals). The doc
+ * is validated before any write, so an invalid document is never persisted; for tailored
+ * resumes the resume + its review items are validated together so orphaned proposals can't be
+ * stored either. Title falls back to the header name, then a default.
  */
 export async function createResume(input: {
   doc: unknown;
   title?: string;
+  /** Defaults to "base"; "tailored" persists the job metadata + review items below. */
+  kind?: ResumeKind;
+  company?: string;
+  targetRole?: string;
+  /** The base resume this was tailored from (FK; SET NULL if that base is later deleted). */
+  sourceResumeId?: string;
+  reviewItems?: ReviewItem[];
+  /** "draft" parks an unfinished tailoring; "finalize" (default) marks a resolved one ready. */
+  intent?: "finalize" | "draft";
 }): Promise<CreateResumeResult> {
   let user, supabase;
   try {
@@ -155,19 +168,59 @@ export async function createResume(input: {
 
   const title = sanitizeTitle(input.title ?? "") || deriveResumeTitle(validated.data);
 
+  // Base resume: unchanged insert — column defaults (kind='base', status='ready',
+  // review_items='[]') keep onboarding and "Start blank" byte-identical to before.
+  if (input.kind !== "tailored") {
+    try {
+      const { data, error } = await supabase
+        .from("resumes")
+        .insert({ user_id: user.id, title, doc: validated.data })
+        .select("id")
+        .single();
+      if (error || !data) {
+        return { ok: false, message: "We couldn't create the resume. Please try again." };
+      }
+      revalidatePath("/dashboard");
+      return { ok: true, id: data.id as string };
+    } catch {
+      return { ok: false, message: "We couldn't create the resume. Please try again." };
+    }
+  }
+
+  // Tailored resume: validate the doc + review items together (no orphaned proposals), then
+  // derive the lifecycle status from what's still pending.
+  const working = validateWorkingDoc({
+    resume: validated.data,
+    reviewItems: input.reviewItems ?? [],
+  });
+  if (!working.ok) {
+    return { ok: false, message: "This tailored resume isn't valid and was not saved." };
+  }
+  const status = tailoredStatusFor(working.data.reviewItems, input.intent ?? "finalize");
+
   try {
     const { data, error } = await supabase
       .from("resumes")
-      .insert({ user_id: user.id, title, doc: validated.data })
+      .insert({
+        user_id: user.id,
+        title,
+        doc: validated.data,
+        kind: "tailored",
+        company: input.company?.trim() || null,
+        target_role: input.targetRole?.trim() || null,
+        source_resume_id: input.sourceResumeId ?? null,
+        review_items: working.data.reviewItems,
+        status,
+      })
       .select("id")
       .single();
     if (error || !data) {
-      return { ok: false, message: "We couldn't create the resume. Please try again." };
+      return { ok: false, message: "We couldn't save this tailored resume. Please try again." };
     }
     revalidatePath("/dashboard");
     return { ok: true, id: data.id as string };
   } catch {
-    return { ok: false, message: "We couldn't create the resume. Please try again." };
+    return { ok: false, message: "We couldn't save this tailored resume. Please try again." };
   }
 }
 
@@ -175,8 +228,17 @@ export async function createResume(input: {
  * Persist edits to an existing resume and bump its version (explicit save — autosave +
  * multi-tab compare-and-swap are M6). Scoped by `id` + `user_id`; a 0-row update is treated
  * as a failure so a good resume is never silently overwritten (FR-8 spirit).
+ *
+ * When `reviewItems` is supplied (the editor always supplies the working set), the resume and
+ * its proposals are validated together and — for a `tailored` row — the persisted review items
+ * and derived status are updated too, so resolving the last proposal flips it to `ready`. Base
+ * rows ignore review items entirely, leaving their save path unchanged.
  */
-export async function saveResume(id: string, doc: unknown): Promise<SaveResumeState> {
+export async function saveResume(
+  id: string,
+  doc: unknown,
+  reviewItems?: ReviewItem[],
+): Promise<SaveResumeState> {
   let user, supabase;
   try {
     ({ user, supabase } = await requireAllowlistedUser());
@@ -187,13 +249,25 @@ export async function saveResume(id: string, doc: unknown): Promise<SaveResumeSt
     throw err;
   }
 
-  const validated = validateResumeDoc(doc);
-  if (!validated.ok) {
-    return {
-      ok: false,
-      category: "validation",
-      message: "This resume isn't valid and was not saved.",
-    };
+  const invalid = (): SaveResumeState => ({
+    ok: false,
+    category: "validation",
+    message: "This resume isn't valid and was not saved.",
+  });
+
+  // Validate the doc — together with its review items when provided, so a save can never
+  // persist proposals orphaned by an edit that deleted their target content.
+  let resume: ResumeDoc;
+  let items: ReviewItem[] | null = null;
+  if (reviewItems) {
+    const working = validateWorkingDoc({ resume: doc, reviewItems });
+    if (!working.ok) return invalid();
+    resume = working.data.resume;
+    items = working.data.reviewItems;
+  } else {
+    const validated = validateResumeDoc(doc);
+    if (!validated.ok) return invalid();
+    resume = validated.data;
   }
 
   const failed = (category: "network" | "unknown"): SaveResumeState => ({
@@ -205,16 +279,23 @@ export async function saveResume(id: string, doc: unknown): Promise<SaveResumeSt
   try {
     const { data: current, error: readError } = await supabase
       .from("resumes")
-      .select("version")
+      .select("version, kind")
       .eq("id", id)
       .eq("user_id", user.id)
       .single();
     if (readError || !current) return failed("network");
 
     const nextVersion = (current.version ?? 0) + 1;
+    const patch: Record<string, unknown> = { doc: resume, version: nextVersion };
+    // Only tailored rows track review items + status; base rows are left untouched.
+    if (items !== null && current.kind === "tailored") {
+      patch.review_items = items;
+      patch.status = tailoredStatusFor(items, "finalize");
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from("resumes")
-      .update({ doc: validated.data, version: nextVersion })
+      .update(patch)
       .eq("id", id)
       .eq("user_id", user.id)
       .select("version")
@@ -299,6 +380,43 @@ export async function duplicateResume(id: string): Promise<CreateResumeResult> {
     return { ok: true, id: data.id as string };
   } catch {
     return { ok: false, message: "We couldn't duplicate this resume." };
+  }
+}
+
+export type ExportDocResult =
+  | { ok: true; doc: ResumeDoc }
+  | { ok: false; message: string };
+
+/**
+ * Fetch a resume's validated doc for client-side PDF export from the dashboard. Kept separate
+ * from the dashboard list query so the (potentially large) doc is fetched on demand — only
+ * when the user actually clicks Export — rather than shipped with every row.
+ */
+export async function loadResumeForExport(id: string): Promise<ExportDocResult> {
+  let user, supabase;
+  try {
+    ({ user, supabase } = await requireAllowlistedUser());
+  } catch (err) {
+    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
+    throw err;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("resumes")
+      .select("doc")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (error || !data) return { ok: false, message: "We couldn't load that resume." };
+
+    const resolved = resolveStoredResume(data.doc);
+    if (resolved.kind !== "ok") {
+      return { ok: false, message: "That resume can't be exported because it's invalid." };
+    }
+    return { ok: true, doc: resolved.doc };
+  } catch {
+    return { ok: false, message: "We couldn't load that resume. Please try again." };
   }
 }
 

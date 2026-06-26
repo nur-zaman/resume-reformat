@@ -8,6 +8,7 @@ import {
   deriveResumeTitle,
   type GenerationResult,
   type ResumeDoc,
+  type ReviewItem,
 } from "@/lib/resume";
 import { createResume } from "@/lib/resume/actions";
 import { tailorResumeAction, type TailorState } from "@/lib/tailoring/actions";
@@ -21,8 +22,9 @@ import type { SaveResult } from "@/components/editor/save-bar";
 /**
  * Tailoring flow (PRD §6.2). Mirrors onboarding: the "paste job description" phase and the
  * "review" phase live in one client component so the generated draft is held in memory and
- * never has to survive a navigation. On save it becomes a NEW resume row (jobs/generations
- * history is M6). `useActionState` lives inside the paste phase so Start over resets cleanly.
+ * never has to survive a navigation. On save it becomes a new `tailored` resume row — carrying
+ * the job metadata + reviewed proposals — that surfaces in the dashboard's "Tailored jobs"
+ * table. `useActionState` lives inside the paste phase so Start over resets cleanly.
  */
 type JobMeta = { title: string; company: string };
 type Phase =
@@ -43,6 +45,7 @@ export function TailoringFlow({
       <ReviewPhase
         draft={phase.draft}
         job={phase.job}
+        sourceResumeId={resumeId}
         onStartOver={() => setPhase({ name: "paste" })}
       />
     );
@@ -192,10 +195,12 @@ const TAILOR_REVIEW_NOTICE = {
 function ReviewPhase({
   draft,
   job,
+  sourceResumeId,
   onStartOver,
 }: {
   draft: GenerationResult;
   job: JobMeta;
+  sourceResumeId: string;
   onStartOver: () => void;
 }) {
   const router = useRouter();
@@ -206,13 +211,27 @@ function ReviewPhase({
     return label ? `${name} — ${label}` : name;
   }
 
-  async function handleSave(doc: ResumeDoc): Promise<SaveResult> {
-    const result = await createResume({ doc, title: tailoredTitle(doc) });
-    if (result.ok) {
-      router.push(`/editor/${result.id}`);
-      return { ok: true };
-    }
-    return { ok: false, message: result.message };
+  // Both paths now persist the tailored resume — and its proposals — so it appears as a
+  // "Tailored job" on the dashboard (no longer lost on navigation). "Finish" resolves to a
+  // ready/review status from what's pending; "Save as draft" parks it for later review.
+  function persist(intent: "finalize" | "draft") {
+    return async (doc: ResumeDoc, reviewItems: ReviewItem[]): Promise<SaveResult> => {
+      const result = await createResume({
+        doc,
+        title: tailoredTitle(doc),
+        kind: "tailored",
+        company: job.company || undefined,
+        targetRole: job.title || undefined,
+        sourceResumeId,
+        reviewItems,
+        intent,
+      });
+      if (result.ok) {
+        router.push("/dashboard");
+        return { ok: true };
+      }
+      return { ok: false, message: result.message };
+    };
   }
 
   function handleStartOver() {
@@ -225,8 +244,10 @@ function ReviewPhase({
     <ResumeEditor
       initialDoc={draft.resume}
       initialReviewItems={draft.reviewItems}
-      onSave={handleSave}
+      onSave={persist("finalize")}
       saveLabel="Save tailored resume"
+      onSaveDraft={persist("draft")}
+      draftLabel="Save as draft"
       requireReview
       reviewNotice={TAILOR_REVIEW_NOTICE}
       onStartOver={handleStartOver}

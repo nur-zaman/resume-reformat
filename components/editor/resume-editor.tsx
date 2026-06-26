@@ -29,6 +29,8 @@ export function ResumeEditor({
   initialReviewItems,
   onSave,
   saveLabel,
+  onSaveDraft,
+  draftLabel,
   requireReview = false,
   reviewNotice,
   onStartOver,
@@ -37,6 +39,8 @@ export function ResumeEditor({
   initialReviewItems: ReviewItem[];
   onSave?: SaveHandler;
   saveLabel?: string;
+  onSaveDraft?: SaveHandler;
+  draftLabel?: string;
   requireReview?: boolean;
   reviewNotice?: ReviewNotice;
   onStartOver?: () => void;
@@ -46,6 +50,8 @@ export function ResumeEditor({
       <EditorWorkspace
         onSave={onSave}
         saveLabel={saveLabel}
+        onSaveDraft={onSaveDraft}
+        draftLabel={draftLabel}
         requireReview={requireReview}
         reviewNotice={reviewNotice}
         onStartOver={onStartOver}
@@ -57,12 +63,16 @@ export function ResumeEditor({
 function EditorWorkspace({
   onSave,
   saveLabel,
+  onSaveDraft,
+  draftLabel,
   requireReview,
   reviewNotice,
   onStartOver,
 }: {
   onSave?: SaveHandler;
   saveLabel?: string;
+  onSaveDraft?: SaveHandler;
+  draftLabel?: string;
   requireReview: boolean;
   reviewNotice?: ReviewNotice;
   onStartOver?: () => void;
@@ -99,7 +109,14 @@ function EditorWorkspace({
         <VerificationBanner notice={reviewNotice} onStartOver={onStartOver} />
       )}
       <WorkspaceHeader hasSave={Boolean(onSave)} />
-      {onSave && <SaveBar onSave={onSave} label={saveLabel} />}
+      {onSave && (
+        <SaveBar
+          onSave={onSave}
+          label={saveLabel}
+          onSaveDraft={onSaveDraft}
+          draftLabel={draftLabel}
+        />
+      )}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(32rem,42rem)]">
         <div className="flex flex-col gap-4">
           <ReviewQueue />

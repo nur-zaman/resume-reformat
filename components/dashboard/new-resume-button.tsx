@@ -12,8 +12,18 @@ import { Button } from "@/components/ui/button";
  * (the paste/PDF onboarding flow) and Start blank (an empty doc created immediately, then
  * opened in the editor). A small menu keeps the dashboard header uncluttered; it closes on
  * outside-click and Escape.
+ *
+ * Creates a *base* resume. `variant="ghost"` renders a quiet text trigger for the BASE RESUME
+ * section header (where "New tailoring" is the loud CTA); the default yellow trigger anchors
+ * the empty state.
  */
-export function NewResumeButton() {
+export function NewResumeButton({
+  variant = "primary",
+  label = "New resume",
+}: {
+  variant?: "primary" | "ghost";
+  label?: string;
+} = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,15 +63,31 @@ export function NewResumeButton() {
 
   return (
     <div ref={containerRef} className="relative">
-      <Button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        disabled={pending}
-      >
-        {pending ? "Creating…" : "New resume"}
-      </Button>
+      {variant === "ghost" ? (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          disabled={pending}
+          className="inline-flex items-center gap-1 text-xs font-medium text-muted transition-colors hover:text-ink disabled:cursor-not-allowed"
+        >
+          <span aria-hidden className="text-sm leading-none">
+            +
+          </span>
+          {pending ? "Creating…" : label}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          disabled={pending}
+        >
+          {pending ? "Creating…" : label}
+        </Button>
+      )}
 
       {open && (
         <div

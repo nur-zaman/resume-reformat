@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAllowlistedUser } from "@/lib/auth/guards";
-import { resolveStoredResume } from "@/lib/resume";
+import {
+  resolveStoredResume,
+  validateWorkingDoc,
+  type ResumeKind,
+  type ReviewItem,
+} from "@/lib/resume";
 import { ResumeWorkspace } from "@/components/editor/resume-workspace";
 
 /**
@@ -19,7 +24,7 @@ export default async function EditorPage({
   const { user, supabase } = await requireAllowlistedUser();
   const { data } = await supabase
     .from("resumes")
-    .select("id, title, doc")
+    .select("id, title, doc, kind, review_items")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -29,8 +34,26 @@ export default async function EditorPage({
   const resolved = resolveStoredResume(data.doc);
   if (resolved.kind !== "ok") return <EditorLoadError />;
 
+  // Persisted proposals seed the review queue. Validate them against the resolved doc and
+  // drop them defensively if they no longer line up — never block editing on bad metadata.
+  const kind: ResumeKind = data.kind === "tailored" ? "tailored" : "base";
+  let reviewItems: ReviewItem[] = [];
+  if (kind === "tailored") {
+    const working = validateWorkingDoc({
+      resume: resolved.doc,
+      reviewItems: data.review_items ?? [],
+    });
+    if (working.ok) reviewItems = working.data.reviewItems;
+  }
+
   return (
-    <ResumeWorkspace id={data.id} title={data.title} initialDoc={resolved.doc} />
+    <ResumeWorkspace
+      id={data.id}
+      title={data.title}
+      initialDoc={resolved.doc}
+      kind={kind}
+      initialReviewItems={reviewItems}
+    />
   );
 }
 

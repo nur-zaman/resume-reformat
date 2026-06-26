@@ -1,13 +1,40 @@
 import { requireAllowlistedUser } from "@/lib/auth/guards";
+import { isGenerationPausedForUser } from "@/lib/ratelimit";
+import {
+  pendingReviewCount,
+  resolveStoredResume,
+  type Block,
+  type ResumeDoc,
+  type ReviewItem,
+  type TailoredStatus,
+} from "@/lib/resume";
+import { WorkspaceHeading } from "@/components/dashboard/workspace-heading";
+import { AiPausedBanner } from "@/components/dashboard/ai-paused-banner";
+import { NewTailoringButton, type TailorBase } from "@/components/dashboard/new-tailoring-button";
 import { NewResumeButton } from "@/components/dashboard/new-resume-button";
-import { ResumeCard } from "@/components/dashboard/resume-card";
+import { BaseResumeCard } from "@/components/dashboard/base-resume-card";
+import { TailoredJobs } from "@/components/dashboard/tailored-jobs";
+import type { TailoredJob } from "@/components/dashboard/tailored-job-row";
+import { sectionLabel } from "@/components/dashboard/ui";
 
 /**
- * Authenticated home: the user's resumes (PRD-deferred "multiple resumes", pulled forward).
- * Lists `public.resumes` newest-first with create/open/rename/duplicate/delete. Minimal and
- * mobile-friendly — a single-column card list that grows to a grid on wider viewports.
+ * Authenticated home — the workspace. One band for the user's BASE RESUME(s) (edited
+ * directly) and one for their TAILORED JOBS (resumes adapted to a specific role, each with a
+ * review status + version count). An "AI paused" banner appears only while the per-hour
+ * generation quota is spent. All of the prior CRUD survives in each card's overflow menu.
  */
-type ResumeRow = { id: string; title: string; updated_at: string };
+type ResumeRow = {
+  id: string;
+  title: string;
+  doc: unknown;
+  kind: string | null;
+  company: string | null;
+  target_role: string | null;
+  review_items: unknown;
+  status: string | null;
+  version: number | null;
+  updated_at: string;
+};
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -15,58 +42,153 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const DATETIME_FORMAT = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 export default async function DashboardPage() {
   const { user, supabase } = await requireAllowlistedUser();
-  const { data } = await supabase
-    .from("resumes")
-    .select("id, title, updated_at")
-    .eq("user_id", user.id)
-    .order("updated_at", { ascending: false });
+  const [{ data }, aiPaused] = await Promise.all([
+    supabase
+      .from("resumes")
+      .select(
+        "id, title, doc, kind, company, target_role, review_items, status, version, updated_at",
+      )
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false }),
+    isGenerationPausedForUser(user.id),
+  ]);
 
-  const resumes = (data ?? []) as ResumeRow[];
+  const rows = (data ?? []) as ResumeRow[];
+  const bases = rows.filter((r) => r.kind !== "tailored");
+  const tailored = rows.filter((r) => r.kind === "tailored");
+
+  const tailorBases: TailorBase[] = bases.map((r) => ({
+    id: r.id,
+    label: resumeName(r),
+  }));
+  const jobs: TailoredJob[] = tailored.map(toJob);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-widest text-primary">
-            Your resumes
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">Resumes</h1>
-        </div>
-        <NewResumeButton />
-      </div>
+    <div className="mx-auto w-full max-w-6xl px-6 py-12">
+      <WorkspaceHeading action={<NewTailoringButton bases={tailorBases} />} />
 
-      {resumes.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {resumes.map((r) => (
-            <li key={r.id}>
-              <ResumeCard
-                id={r.id}
-                title={r.title}
-                updatedLabel={DATE_FORMAT.format(new Date(r.updated_at))}
-              />
-            </li>
-          ))}
-        </ul>
+      {aiPaused && (
+        <div className="mt-8">
+          <AiPausedBanner />
+        </div>
       )}
+
+      <section className="mt-10">
+        <div className="flex items-center justify-between gap-4">
+          <p className={sectionLabel}>Base resume</p>
+          {bases.length > 0 && (
+            <NewResumeButton variant="ghost" label="New base resume" />
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3">
+          {bases.length === 0 ? (
+            <BaseResumeEmptyState />
+          ) : (
+            bases.map((r) => <BaseResumeCard key={r.id} {...toBaseCard(r)} />)
+          )}
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-baseline gap-2.5">
+          <p className={sectionLabel}>Tailored jobs</p>
+          {jobs.length > 0 && (
+            <span className="text-xs text-muted-soft">{jobs.length} active</span>
+          )}
+        </div>
+        <div className="mt-4">
+          <TailoredJobs jobs={jobs} />
+        </div>
+      </section>
     </div>
   );
 }
 
-function EmptyState() {
+function BaseResumeEmptyState() {
   return (
-    <div className="mt-10 rounded-lg border border-dashed border-hairline bg-surface-card px-6 py-16 text-center">
-      <h2 className="text-lg font-semibold text-ink">No resumes yet</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted">
-        Create your first resume — import an existing one by pasting text or uploading a
-        PDF, or start from a blank document.
+    <div className="rounded-lg border border-dashed border-hairline bg-surface-card/40 px-6 py-14 text-center">
+      <h2 className="text-base font-semibold text-ink">No base resume yet</h2>
+      <p className="mx-auto mt-1.5 max-w-md text-sm text-muted">
+        Add your resume — import an existing one by pasting text or uploading a PDF, or start
+        from a blank document. Then tailor it to any role.
       </p>
       <div className="mt-6 flex justify-center">
-        <NewResumeButton />
+        <NewResumeButton label="Add base resume" />
       </div>
     </div>
   );
+}
+
+// --- Row → view-model helpers -------------------------------------------------
+
+function headerBlock(doc: ResumeDoc): Extract<Block, { type: "header" }> | undefined {
+  return doc.blocks.find(
+    (b): b is Extract<Block, { type: "header" }> => b.type === "header",
+  );
+}
+
+/** A resume's display name: the header name when set, otherwise its stored title. */
+function resumeName(row: ResumeRow): string {
+  const resolved = resolveStoredResume(row.doc);
+  if (resolved.kind === "ok") {
+    const name = headerBlock(resolved.doc)?.name.trim();
+    if (name) return name;
+  }
+  return row.title || "Untitled resume";
+}
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "•";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function toBaseCard(row: ResumeRow) {
+  const resolved = resolveStoredResume(row.doc);
+  const doc = resolved.kind === "ok" ? resolved.doc : null;
+  const header = doc ? headerBlock(doc) : undefined;
+  const name = header?.name.trim() || row.title || "Untitled resume";
+  const sections = doc
+    ? doc.blocks
+        .filter((b) => (b.type === "header" ? true : b.visible))
+        .map((b) => (b.type === "header" ? "Header" : b.title))
+    : [];
+  return {
+    id: row.id,
+    name,
+    headline: header?.headline.trim() ?? "",
+    initials: initialsFor(name),
+    sections,
+    updatedLabel: DATE_FORMAT.format(new Date(row.updated_at)),
+  };
+}
+
+function toJob(row: ResumeRow): TailoredJob {
+  const items = (Array.isArray(row.review_items) ? row.review_items : []) as ReviewItem[];
+  const version = (row.version ?? 0) + 1;
+  const validStatuses: TailoredStatus[] = ["draft", "review", "ready"];
+  const status = validStatuses.includes(row.status as TailoredStatus)
+    ? (row.status as TailoredStatus)
+    : "ready";
+  return {
+    id: row.id,
+    role: row.target_role?.trim() || "Tailored resume",
+    company: row.company?.trim() ?? "",
+    versionLabel: `${version} version${version === 1 ? "" : "s"}`,
+    status,
+    pendingCount: pendingReviewCount(items),
+    updatedLabel: DATETIME_FORMAT.format(new Date(row.updated_at)),
+  };
 }
