@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAllowlistedUser } from "@/lib/auth/guards";
 import { isGenerationPausedForUser } from "@/lib/ratelimit";
 import {
@@ -101,10 +102,20 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-12">
-        <div className="flex items-baseline gap-2.5">
-          <p className={sectionLabel}>Tailored jobs</p>
+        <div className="flex items-baseline justify-between gap-4">
+          <div className="flex items-baseline gap-2.5">
+            <p className={sectionLabel}>Tailored jobs</p>
+            {jobs.length > 0 && (
+              <span className="text-xs text-muted-soft">{jobs.length} active</span>
+            )}
+          </div>
           {jobs.length > 0 && (
-            <span className="text-xs text-muted-soft">{jobs.length} active</span>
+            <Link
+              href="/tracker"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Open job tracker →
+            </Link>
           )}
         </div>
         <div className="mt-4">

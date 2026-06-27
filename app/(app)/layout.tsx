@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAuthState } from "@/lib/auth/guards";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Wordmark } from "@/components/ui/wordmark";
+import { AppNav } from "@/components/app-nav";
 
 /**
  * Protected shell. Server-side guard branches three ways:
@@ -42,13 +43,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="flex h-16 items-center justify-between border-b border-hairline px-6">
-        <Link
-          href="/dashboard"
-          aria-label="Resume Reformatter — go to dashboard"
-          className="text-ink hover:text-body-strong"
-        >
-          <Wordmark iconSize={26} className="text-sm" />
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link
+            href="/dashboard"
+            aria-label="Resume Reformatter — go to dashboard"
+            className="text-ink hover:text-body-strong"
+          >
+            <Wordmark iconSize={26} className="text-sm" />
+          </Link>
+          <AppNav />
+        </div>
         <div className="flex items-center gap-4">
           <span className="hidden font-mono text-xs text-muted sm:inline">
             {auth.user.email}
