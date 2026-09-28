@@ -6,9 +6,10 @@ import {
   resolveStoredResume,
   type Block,
   type ResumeDoc,
+  parseTailoredStatus,
   type ReviewItem,
-  type TailoredStatus,
 } from "@/lib/resume";
+import { listResumes, type ResumeSummaryRow } from "@/lib/resume/queries";
 import { WorkspaceHeading } from "@/components/dashboard/workspace-heading";
 import { AiPausedBanner } from "@/components/dashboard/ai-paused-banner";
 import { NewTailoringButton, type TailorBase } from "@/components/dashboard/new-tailoring-button";
@@ -24,19 +25,6 @@ import { sectionLabel } from "@/components/dashboard/ui";
  * review status + version count). An "AI paused" banner appears only while the per-hour
  * generation quota is spent. All of the prior CRUD survives in each card's overflow menu.
  */
-type ResumeRow = {
-  id: string;
-  title: string;
-  doc: unknown;
-  kind: string | null;
-  company: string | null;
-  target_role: string | null;
-  review_items: unknown;
-  status: string | null;
-  version: number | null;
-  updated_at: string;
-};
-
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -53,18 +41,11 @@ const DATETIME_FORMAT = new Intl.DateTimeFormat("en-US", {
 
 export default async function DashboardPage() {
   const { user, supabase } = await requireAllowlistedUser();
-  const [{ data }, aiPaused] = await Promise.all([
-    supabase
-      .from("resumes")
-      .select(
-        "id, title, doc, kind, company, target_role, review_items, status, version, updated_at",
-      )
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false }),
+  const [rows, aiPaused] = await Promise.all([
+    listResumes({ supabase, userId: user.id }),
     isGenerationPausedForUser(user.id),
   ]);
 
-  const rows = (data ?? []) as ResumeRow[];
   const bases = rows.filter((r) => r.kind !== "tailored");
   const tailored = rows.filter((r) => r.kind === "tailored");
 
@@ -150,7 +131,7 @@ function headerBlock(doc: ResumeDoc): Extract<Block, { type: "header" }> | undef
 }
 
 /** A resume's display name: the header name when set, otherwise its stored title. */
-function resumeName(row: ResumeRow): string {
+function resumeName(row: ResumeSummaryRow): string {
   const resolved = resolveStoredResume(row.doc);
   if (resolved.kind === "ok") {
     const name = headerBlock(resolved.doc)?.name.trim();
@@ -166,7 +147,7 @@ function initialsFor(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function toBaseCard(row: ResumeRow) {
+function toBaseCard(row: ResumeSummaryRow) {
   const resolved = resolveStoredResume(row.doc);
   const doc = resolved.kind === "ok" ? resolved.doc : null;
   const header = doc ? headerBlock(doc) : undefined;
@@ -186,19 +167,15 @@ function toBaseCard(row: ResumeRow) {
   };
 }
 
-function toJob(row: ResumeRow): TailoredJob {
+function toJob(row: ResumeSummaryRow): TailoredJob {
   const items = (Array.isArray(row.review_items) ? row.review_items : []) as ReviewItem[];
   const version = (row.version ?? 0) + 1;
-  const validStatuses: TailoredStatus[] = ["draft", "review", "ready"];
-  const status = validStatuses.includes(row.status as TailoredStatus)
-    ? (row.status as TailoredStatus)
-    : "ready";
   return {
     id: row.id,
     role: row.target_role?.trim() || "Tailored resume",
     company: row.company?.trim() ?? "",
     versionLabel: `${version} version${version === 1 ? "" : "s"}`,
-    status,
+    status: parseTailoredStatus(row.status),
     pendingCount: pendingReviewCount(items),
     updatedLabel: DATETIME_FORMAT.format(new Date(row.updated_at)),
   };

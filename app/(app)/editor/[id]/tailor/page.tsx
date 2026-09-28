@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAllowlistedUser } from "@/lib/auth/guards";
 import { resolveStoredResume } from "@/lib/resume";
+import { getResume } from "@/lib/resume/queries";
+import { LoadError } from "@/components/ui/load-error";
 import { TailoringFlow } from "@/components/tailoring/tailoring-flow";
 
 /**
@@ -17,43 +18,22 @@ export default async function TailorPage({
 }) {
   const { id } = await params;
   const { user, supabase } = await requireAllowlistedUser();
-  const { data } = await supabase
-    .from("resumes")
-    .select("id, title, doc")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const data = await getResume({ supabase, userId: user.id }, id);
 
   if (!data) redirect("/dashboard");
 
   // Confirm the base resume is valid before the user invests in pasting a job description.
   const resolved = resolveStoredResume(data.doc);
-  if (resolved.kind !== "ok") return <TailorLoadError id={data.id} />;
+  if (resolved.kind !== "ok") {
+    return (
+      <LoadError
+        title="This resume can't be tailored"
+        message="It's stored in a format this editor can't open, so it can't be tailored. Your saved copy is left untouched."
+        href={`/editor/${data.id}`}
+        linkLabel="Back to the editor"
+      />
+    );
+  }
 
   return <TailoringFlow resumeId={data.id} resumeTitle={data.title} />;
-}
-
-function TailorLoadError({ id }: { id: string }) {
-  return (
-    <div className="px-6 py-12">
-      <div className="mx-auto max-w-2xl">
-        <p className="font-mono text-xs uppercase tracking-widest text-error">
-          Couldn&apos;t open your resume
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">
-          This resume can&apos;t be tailored
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          It&apos;s stored in a format this editor can&apos;t open, so it can&apos;t be
-          tailored. Your saved copy is left untouched.
-        </p>
-        <Link
-          href={`/editor/${id}`}
-          className="mt-6 inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-active"
-        >
-          Back to the editor
-        </Link>
-      </div>
-    </div>
-  );
 }

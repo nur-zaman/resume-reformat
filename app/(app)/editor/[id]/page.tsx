@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAllowlistedUser } from "@/lib/auth/guards";
 import {
@@ -7,6 +6,8 @@ import {
   type ResumeKind,
   type ReviewItem,
 } from "@/lib/resume";
+import { getResume } from "@/lib/resume/queries";
+import { LoadError } from "@/components/ui/load-error";
 import { ResumeWorkspace } from "@/components/editor/resume-workspace";
 
 /**
@@ -22,17 +23,21 @@ export default async function EditorPage({
 }) {
   const { id } = await params;
   const { user, supabase } = await requireAllowlistedUser();
-  const { data } = await supabase
-    .from("resumes")
-    .select("id, title, doc, kind, review_items")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const data = await getResume({ supabase, userId: user.id }, id);
 
   if (!data) redirect("/dashboard");
 
   const resolved = resolveStoredResume(data.doc);
-  if (resolved.kind !== "ok") return <EditorLoadError />;
+  if (resolved.kind !== "ok") {
+    return (
+      <LoadError
+        title="This resume couldn't be read"
+        message="It's stored in a format this editor can't open. Your saved copy is left untouched. You can import a fresh resume to replace it."
+        href="/dashboard"
+        linkLabel="Back to resumes"
+      />
+    );
+  }
 
   // Persisted proposals seed the review queue. Validate them against the resolved doc and
   // drop them defensively if they no longer line up — never block editing on bad metadata.
@@ -54,30 +59,5 @@ export default async function EditorPage({
       kind={kind}
       initialReviewItems={reviewItems}
     />
-  );
-}
-
-function EditorLoadError() {
-  return (
-    <div className="px-6 py-12">
-      <div className="mx-auto max-w-2xl">
-        <p className="font-mono text-xs uppercase tracking-widest text-error">
-          Couldn&apos;t open your resume
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">
-          This resume couldn&apos;t be read
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          It&apos;s stored in a format this editor can&apos;t open. Your saved copy is left
-          untouched. You can import a fresh resume to replace it.
-        </p>
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-active"
-        >
-          Back to resumes
-        </Link>
-      </div>
-    </div>
   );
 }

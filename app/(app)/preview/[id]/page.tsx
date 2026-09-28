@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAllowlistedUser } from "@/lib/auth/guards";
 import { resolveStoredResume } from "@/lib/resume";
+import { getResume } from "@/lib/resume/queries";
+import { LoadError } from "@/components/ui/load-error";
 import { ResumeDocument } from "@/components/preview/resume-document";
 import { PdfExport } from "@/components/preview/pdf/pdf-export";
 import { actionSecondary } from "@/components/dashboard/ui";
@@ -19,17 +21,21 @@ export default async function PreviewPage({
 }) {
   const { id } = await params;
   const { user, supabase } = await requireAllowlistedUser();
-  const { data } = await supabase
-    .from("resumes")
-    .select("id, title, doc")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const data = await getResume({ supabase, userId: user.id }, id);
 
   if (!data) redirect("/dashboard");
 
   const resolved = resolveStoredResume(data.doc);
-  if (resolved.kind !== "ok") return <PreviewLoadError id={data.id} />;
+  if (resolved.kind !== "ok") {
+    return (
+      <LoadError
+        title="This resume couldn't be read"
+        message="It's stored in a format this preview can't open. Your saved copy is left untouched."
+        href="/dashboard"
+        linkLabel="Back to workspace"
+      />
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
@@ -76,31 +82,6 @@ export default async function PreviewPage({
         <div className="mx-auto w-[816px] max-w-full">
           <ResumeDocument doc={resolved.doc} />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function PreviewLoadError({ id }: { id: string }) {
-  return (
-    <div className="px-6 py-12">
-      <div className="mx-auto max-w-2xl">
-        <p className="font-mono text-xs uppercase tracking-widest text-error">
-          Couldn&apos;t open your resume
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">
-          This resume couldn&apos;t be read
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          It&apos;s stored in a format this preview can&apos;t open. Your saved copy is left
-          untouched.
-        </p>
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-active"
-        >
-          Back to workspace
-        </Link>
       </div>
     </div>
   );

@@ -16,7 +16,12 @@ import type { ReviewItem } from "./schema";
  * truth. See [[m5-tailoring]] for where these resumes come from.
  */
 export type ResumeKind = "base" | "tailored";
-export type TailoredStatus = "draft" | "review" | "ready";
+export const TAILORED_STATUSES = ["draft", "review", "ready"] as const;
+export type TailoredStatus = (typeof TAILORED_STATUSES)[number];
+
+export function parseTailoredStatus(value: unknown): TailoredStatus {
+  return TAILORED_STATUSES.includes(value as TailoredStatus) ? (value as TailoredStatus) : "ready";
+}
 
 /** How many AI proposals still need a decision. */
 export function pendingReviewCount(reviewItems: readonly ReviewItem[]): number {

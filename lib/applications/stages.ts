@@ -27,6 +27,12 @@ export const APPLICATION_STAGES = [
 
 export type ApplicationStage = (typeof APPLICATION_STAGES)[number];
 
+export function parseApplicationStage(value: unknown): ApplicationStage {
+  return APPLICATION_STAGES.includes(value as ApplicationStage)
+    ? (value as ApplicationStage)
+    : "none";
+}
+
 export const STAGE_LABELS: Record<ApplicationStage, string> = {
   none: "Not applied",
   applied: "Applied",

@@ -1,10 +1,7 @@
 import { requireAllowlistedUser } from "@/lib/auth/guards";
-import {
-  parseStageHistory,
-  APPLICATION_STAGES,
-  type ApplicationStage,
-} from "@/lib/applications/stages";
-import type { TailoredStatus } from "@/lib/resume";
+import { parseApplicationStage, parseStageHistory } from "@/lib/applications/stages";
+import { parseTailoredStatus } from "@/lib/resume";
+import { listApplications, type ApplicationRow } from "@/lib/resume/queries";
 import { ApplicationList } from "@/components/tracker/application-list";
 import type { ApplicationView } from "@/components/tracker/application-row";
 
@@ -15,34 +12,13 @@ import type { ApplicationView } from "@/components/tracker/application-row";
  * is the final boundary. Stage/date edits go through `updateApplication` and never touch the
  * resume document, so the two views stay independent.
  */
-type TrackerRow = {
-  id: string;
-  company: string | null;
-  target_role: string | null;
-  status: string | null;
-  application_stage: string | null;
-  applied_at: string | null;
-  follow_up_at: string | null;
-  job_url: string | null;
-  notes: string | null;
-  stage_history: unknown;
-};
-
-const VALID_STATUSES: TailoredStatus[] = ["draft", "review", "ready"];
-
-function toView(row: TrackerRow): ApplicationView {
-  const status = VALID_STATUSES.includes(row.status as TailoredStatus)
-    ? (row.status as TailoredStatus)
-    : "ready";
-  const stage = APPLICATION_STAGES.includes(row.application_stage as ApplicationStage)
-    ? (row.application_stage as ApplicationStage)
-    : "none";
+function toView(row: ApplicationRow): ApplicationView {
   return {
     id: row.id,
     role: row.target_role?.trim() || "Tailored resume",
     company: row.company?.trim() ?? "",
-    status,
-    stage,
+    status: parseTailoredStatus(row.status),
+    stage: parseApplicationStage(row.application_stage),
     appliedAt: row.applied_at ?? null,
     followUpAt: row.follow_up_at ?? null,
     jobUrl: row.job_url ?? null,
@@ -53,16 +29,7 @@ function toView(row: TrackerRow): ApplicationView {
 
 export default async function TrackerPage() {
   const { user, supabase } = await requireAllowlistedUser();
-  const { data } = await supabase
-    .from("resumes")
-    .select(
-      "id, company, target_role, status, application_stage, applied_at, follow_up_at, job_url, notes, stage_history",
-    )
-    .eq("user_id", user.id)
-    .eq("kind", "tailored")
-    .order("updated_at", { ascending: false });
-
-  const apps = ((data ?? []) as TrackerRow[]).map(toView);
+  const apps = (await listApplications({ supabase, userId: user.id })).map(toView);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-12">
