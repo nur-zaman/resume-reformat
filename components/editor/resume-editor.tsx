@@ -10,18 +10,6 @@ import { ReviewQueue } from "./review/proposal";
 import { SaveBar, type SaveHandler } from "./save-bar";
 import { ResumePreview } from "@/components/preview/resume-preview";
 
-/**
- * Client entry point for the resume editor. A server page seeds it with a Supabase read
- * or a parse-result draft via serializable props. State lives in a pure reducer behind
- * EditorProvider; this component owns the debounced local re-validation and the desktop
- * two-pane layout (editor left, preview right).
- *
- * Optional M4/M5 props let the same editor serve onboarding review, tailoring review, and
- * later editing: `onSave` adds an explicit save control (`saveLabel` names it);
- * `requireReview` shows the review banner (`reviewNotice` overrides its copy for tailoring);
- * `onStartOver` adds a re-paste affordance. When none are passed (the M2/M3 fixture pages),
- * the editor renders exactly as before.
- */
 export type ReviewNotice = { heading: string; body: string };
 
 export function ResumeEditor({
@@ -79,8 +67,6 @@ function EditorWorkspace({
 }) {
   const { state, dispatch } = useEditorStore();
 
-  // Re-validate the working document shortly after edits settle (FR-20). Runs off the
-  // critical path; the editor stays interactive and issues surface non-blockingly.
   useEffect(() => {
     const handle = setTimeout(() => {
       const result = validateWorkingDoc({
@@ -130,10 +116,6 @@ function EditorWorkspace({
   );
 }
 
-/**
- * Mandatory pre-save guidance for a freshly parsed draft (PRD §6.1, FR-7). Non-dismissable
- * and uses a non-color indicator (the "Review" label + icon-free text), not yellow alone.
- */
 function VerificationBanner({
   notice,
   onStartOver,
@@ -143,7 +125,6 @@ function VerificationBanner({
 }) {
   const headingRef = useRef<HTMLParagraphElement>(null);
 
-  // Land screen-reader/keyboard focus on the guidance when the review phase mounts.
   useEffect(() => {
     headingRef.current?.focus();
   }, []);

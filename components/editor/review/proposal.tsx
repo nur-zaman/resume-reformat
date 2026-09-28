@@ -7,7 +7,6 @@ import {
 import type { ReviewItem } from "@/lib/resume";
 import { useEditorStore, nowIso } from "../editor-context";
 
-/** The yellow "AI proposed" tag — uses both color and text so status is not color-only. */
 function ProposalTag() {
   return (
     <span className="inline-flex items-center gap-1 rounded-pill bg-primary px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-on-primary">
@@ -23,10 +22,6 @@ function resolveActions(dispatch: ReturnType<typeof useEditorStore>["dispatch"],
   };
 }
 
-/**
- * Shown above a rich-text field holding pending proposals. Editing the field does NOT
- * accept the proposal (FR-19) — the explicit Accept button does; Delete removes it.
- */
 export function ProposalBanner({ items }: { items: ReviewItem[] }) {
   const { dispatch } = useEditorStore();
   if (items.length === 0) return null;
@@ -70,7 +65,6 @@ export function ProposalBanner({ items }: { items: ReviewItem[] }) {
   );
 }
 
-/** A light list of pending proposals with a keyboard-accessible "jump to" action. */
 export function ReviewQueue() {
   const { state, dispatch } = useEditorStore();
   const pending = pendingReviewItems(state);

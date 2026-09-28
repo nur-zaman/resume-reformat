@@ -6,11 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useEditorStore } from "./editor-context";
 
 export type SaveResult = { ok: true } | { ok: false; message: string };
-/**
- * The current review items are passed alongside the doc so a tailored resume's persisted
- * proposals + status stay in sync on save. Handlers that only persist a base resume can
- * accept just the doc — the extra argument is harmless.
- */
 export type SaveHandler = (
   doc: ResumeDoc,
   reviewItems: ReviewItem[],
@@ -22,16 +17,6 @@ type SaveLifecycle =
   | { kind: "saved" }
   | { kind: "error"; message: string };
 
-/**
- * Explicit "Save base resume" control (M4). Reads the current document from the editor
- * store and calls the page-supplied `onSave`. The save lifecycle is kept component-local
- * on purpose: the reducer's `saveStatus`/`revision` seams stay reserved for the M6
- * autosave + multi-tab compare-and-swap work. Save is blocked while the document is
- * invalid (the WorkspaceHeader shows the issue count).
- *
- * An optional `onSaveDraft` adds a secondary control (used by tailoring) so an unfinished
- * draft can be parked with its proposals still pending, instead of forcing a finalize.
- */
 export function SaveBar({
   onSave,
   label = "Save base resume",

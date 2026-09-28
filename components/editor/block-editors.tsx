@@ -24,7 +24,6 @@ type ExperienceBlock = Extract<Block, { type: "experience" }>;
 type EducationBlock = Extract<Block, { type: "education" }>;
 type RichTextBlock = Extract<Block, { type: "richtext" }>;
 
-/** Pending review items whose target lives in this specific rich-text body. */
 function pendingForBody(reviewItems: ReviewItem[], body: RichText): ReviewItem[] {
   const ids = new Set(collectContentIdsFromRichText(body));
   return reviewItems.filter((r) => r.status === "pending" && ids.has(r.targetContentId));
@@ -32,10 +31,6 @@ function pendingForBody(reviewItems: ReviewItem[], body: RichText): ReviewItem[]
 
 const CARD = "rounded-md border border-hairline bg-surface-soft p-3";
 const SUBHEAD = "text-xs font-semibold uppercase tracking-wider text-muted";
-
-// ---------------------------------------------------------------------------
-// Header
-// ---------------------------------------------------------------------------
 
 const CONTACT_KINDS: HeaderBlock["contact"][number]["kind"][] = [
   "email",
@@ -236,10 +231,6 @@ function AddLinkForm({ onAdd }: { onAdd: (label: string, href: string) => void }
   );
 }
 
-// ---------------------------------------------------------------------------
-// Summary & custom rich-text sections
-// ---------------------------------------------------------------------------
-
 function RichTextBody({
   body,
   ariaLabel,
@@ -286,10 +277,6 @@ export function RichTextSectionEditor({ block }: { block: RichTextBlock }) {
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// Skills
-// ---------------------------------------------------------------------------
 
 export function SkillsEditor({ block }: { block: SkillsBlock }) {
   const { dispatch } = useEditorStore();
@@ -346,10 +333,6 @@ export function SkillsEditor({ block }: { block: SkillsBlock }) {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Experience & education entries
-// ---------------------------------------------------------------------------
 
 export function ExperienceEditor({ block }: { block: ExperienceBlock }) {
   const { dispatch } = useEditorStore();

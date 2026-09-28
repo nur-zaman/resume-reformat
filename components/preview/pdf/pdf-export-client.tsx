@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * Client-only PDF preview + download (PRD §6.4, FR-27, FR-30).
- *
- * Uses react-pdf's `usePDF` to render the document to a blob in the browser, shows it in
- * an inline preview, and offers a download with the FR-30 filename. The PDF is generated
- * locally and never uploaded. Loaded behind a `dynamic(ssr:false)` boundary by
- * pdf-export.tsx, so react-pdf's browser-only code never reaches the server.
- */
-
 import { useEffect } from "react";
 import { usePDF } from "@react-pdf/renderer";
 import type { ResumeDoc } from "@/lib/resume";
@@ -18,7 +9,6 @@ import { ResumePdf } from "./resume-pdf";
 export default function PdfExportClient({ doc }: { doc: ResumeDoc }) {
   const [instance, update] = usePDF({ document: <ResumePdf doc={doc} /> });
 
-  // Re-render the PDF whenever the resume changes so the preview stays live.
   useEffect(() => {
     update(<ResumePdf doc={doc} />);
   }, [doc, update]);

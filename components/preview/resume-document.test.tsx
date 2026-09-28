@@ -4,11 +4,6 @@ import { ResumeDocument } from "./resume-document";
 import { realisticResume, emptyResume, longResume } from "@/lib/resume/fixtures";
 import type { ResumeDoc } from "@/lib/resume";
 
-/**
- * Structural snapshots of the HTML resume template (PRD §10 visual-regression layer).
- * Because both renderers consume the same shared model, a change to that model surfaces
- * here as a snapshot diff — the cheap drift guard between the HTML and PDF outputs.
- */
 describe("ResumeDocument (HTML)", () => {
   it("renders the realistic single-page resume", () => {
     expect(renderToStaticMarkup(<ResumeDocument doc={realisticResume} />)).toMatchSnapshot();

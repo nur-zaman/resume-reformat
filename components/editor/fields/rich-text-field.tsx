@@ -19,13 +19,6 @@ import { normalizeRichTextJson } from "@/lib/editor";
 import { cn } from "@/lib/utils/cn";
 import { ContentId } from "./content-id-extension";
 
-/**
- * The constrained ATS-safe rich-text editor — the single place ProseMirror is used.
- * Controlled: `value` is canonical ProseMirror JSON, `onChange` emits the normalized
- * JSON on every edit. The extension set maps 1:1 to the allowed subset (PRD §4); the
- * link mark is narrowed to a single `href` attribute so its JSON matches the schema.
- */
-
 // Link narrowed to emit only `href` (no target/rel/class) so output matches the schema.
 const ConstrainedLink = Link.extend({
   addAttributes() {
@@ -65,7 +58,6 @@ type RichTextFieldProps = {
   value: RichText;
   onChange: (next: RichText) => void;
   ariaLabel: string;
-  /** Tints the field and shows a left accent when it holds a pending proposal. */
   highlighted?: boolean;
 };
 
@@ -91,8 +83,7 @@ export function RichTextField({ value, onChange, ariaLabel, highlighted }: RichT
     },
   });
 
-  // Reflect external changes (e.g. a dismissed proposal removing a node) without
-  // clobbering the caret on the user's own keystrokes.
+  // Reflect external changes without clobbering the caret on the user's own keystrokes.
   useEffect(() => {
     if (!editor) return;
     const incoming = JSON.stringify(value);
@@ -114,10 +105,6 @@ export function RichTextField({ value, onChange, ariaLabel, highlighted }: RichT
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Toolbar
-// ---------------------------------------------------------------------------
 
 function RichTextToolbar({ editor }: { editor: Editor }) {
   // Re-render when the selection/marks change so toggle states stay accurate.

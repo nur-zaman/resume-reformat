@@ -1,16 +1,3 @@
-/**
- * The fixed single-column resume template, rendered as HTML (PRD FR-26).
- *
- * Pure and hook-free so it renders in the live editor preview AND under
- * `renderToStaticMarkup` in node snapshot tests. It consumes the shared render layer:
- * `resumeToSections` for block order/visibility, `richTextToNodes` for rich text, and
- * `lib/render/tokens` for every size/colour — the same inputs the PDF renderer uses, so
- * the two outputs stay in lockstep (PRD §10).
- *
- * Sizes are emitted in `pt` (matching the PDF's points); the live preview scales the
- * whole sheet to fit its pane (see resume-preview.tsx).
- */
-
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import type {
   Block,

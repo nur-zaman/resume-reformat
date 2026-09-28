@@ -1,16 +1,5 @@
 "use client";
 
-/**
- * The editor's right-pane live preview (PRD FR-26) plus the export controls.
- *
- * Renders the fixed HTML template (ResumeDocument) from the current working document. A
- * zoom toolbar lets the user read the sheet comfortably: "Fit width" scales the US-Letter
- * sheet to the pane (the default), and 100%/±/manual zoom enlarge it with the pane
- * scrolling in both axes. The sheet is a continuous paper column — true page breaks are
- * shown in the PDF preview, not simulated here. Export is gated (FR-28): while AI proposals
- * are pending the PDF button is disabled and links to the next unresolved item.
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   blockIdForContentId,
@@ -23,9 +12,9 @@ import { useEditorStore } from "@/components/editor/editor-context";
 import { ResumeDocument } from "./resume-document";
 import { PdfExport } from "./pdf/pdf-export";
 
-/** US Letter width (612pt) in CSS px at 96dpi — the unscaled sheet width. */
+// US Letter width (612pt) in CSS px at 96dpi.
 const PAPER_PX = Math.round((612 * 96) / 72); // 816
-/** Pane inner padding (Tailwind p-4) subtracted when computing the fit-width scale. */
+// Tailwind p-4 pane padding, subtracted when computing the fit-width scale.
 const PANE_PAD = 16;
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 2;

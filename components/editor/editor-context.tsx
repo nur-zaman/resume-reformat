@@ -46,7 +46,6 @@ export function useEditorStore(): EditorStore {
   return ctx;
 }
 
-/** ISO timestamp for actions that stamp `resolvedAt` (kept out of the pure reducer). */
 export function nowIso(): string {
   return new Date().toISOString();
 }

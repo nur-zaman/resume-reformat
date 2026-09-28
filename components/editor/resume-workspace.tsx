@@ -11,16 +11,6 @@ import { saveResume } from "@/lib/resume/actions";
 import { ResumeEditor } from "./resume-editor";
 import type { SaveResult } from "./save-bar";
 
-/**
- * Editing one saved resume. The same editor serves onboarding review and later editing
- * (PRD FR-7); explicit save persists to `public.resumes` by id (autosave is M6). A slim
- * breadcrumb gives a way back to the dashboard now that resumes live at `/editor/[id]`.
- *
- * A `tailored` resume carries its AI proposals: they seed the review queue, and while any are
- * still pending the review banner shows and export stays blocked (FR-28). Save persists the
- * current proposals so the resume's dashboard status (review → ready) tracks the user's
- * decisions. A `base` resume has no proposals and behaves exactly as before.
- */
 const TAILORED_REVIEW_NOTICE = {
   heading: "Resolve the AI's proposals",
   body:

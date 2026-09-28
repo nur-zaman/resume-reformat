@@ -1,21 +1,9 @@
 "use client";
 
-/**
- * The fixed resume template rendered to PDF with `@react-pdf/renderer` (PRD FR-27, FR-29).
- *
- * It mirrors the HTML template (components/preview/resume-document.tsx) by consuming the
- * same shared layer — `resumeToSections`, `richTextToNodes`, and `lib/render/tokens` —
- * so the PDF and HTML outputs stay aligned (PRD §10). This module is imported only on the
- * client (behind a dynamic `ssr:false` boundary) because react-pdf relies on browser APIs.
- *
- * Pagination (FR-29):
- *   - each experience/education entry is an unbreakable unit (`wrap={false}`) so a normal
- *     entry is pushed whole to the next page rather than split or clipped;
- *   - an entry taller than (almost) a full page falls back to `wrap` enabled so it can
- *     split between bullets instead of overflowing — react-pdf exposes no measure API, so
- *     this uses a height estimate (tunable);
- *   - section headings carry `minPresenceAhead` so they never orphan at a page bottom.
- */
+// react-pdf pagination: entries use wrap={false} so a normal one pushes whole to the next
+// page; entries near a full page fall back to wrap (react-pdf has no measure API, so
+// height is estimated) so they can split between bullets instead of overflowing. Section
+// titles use minPresenceAhead so they don't orphan at a page bottom.
 
 import { type ReactNode } from "react";
 import {
@@ -231,7 +219,6 @@ function PdfEntryRows({
   );
 }
 
-/** Estimate an entry's rendered height (pt) to decide whether it must be splittable. */
 function estimateEntryHeight(body: RichText): number {
   const nodes = richTextToNodes(body);
   let lines = 0;
@@ -245,7 +232,6 @@ function estimateEntryHeight(body: RichText): number {
   return headerRows + SPACE.afterEntryHeader + bodyHeight + SPACE.entryGap;
 }
 
-/** Keep an entry whole unless it is nearly a full page tall, in which case allow a split. */
 function allowSplit(body: RichText): boolean {
   return estimateEntryHeight(body) > USABLE_HEIGHT * 0.92;
 }

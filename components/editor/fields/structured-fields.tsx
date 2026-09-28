@@ -5,7 +5,6 @@ import { TextInput } from "@/components/ui/text-input";
 import { cn } from "@/lib/utils/cn";
 import { IconButton } from "../controls";
 
-/** A labeled single-line text field, wrapping the shared TextInput. */
 export function LabeledField({
   label,
   value,
@@ -35,7 +34,6 @@ export function LabeledField({
   );
 }
 
-/** An editable list of plain strings (e.g. the items within a skills category). */
 export function StringListField({
   label,
   items,

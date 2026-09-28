@@ -1,11 +1,7 @@
 "use client";
 
-/**
- * Export entry point. A `"use client"` shell that lazy-loads the react-pdf preview behind
- * `dynamic(ssr:false)` — Next 16 forbids `ssr:false` in a Server Component, and this also
- * keeps react-pdf's WASM/browser code out of the initial bundle until the user opens the
- * preview. The caller (resume-preview.tsx) gates whether this renders at all (FR-28).
- */
+// Next 16 forbids `ssr:false` in a Server Component, so this client shell lazy-loads
+// react-pdf behind `dynamic(ssr:false)` instead.
 
 import dynamic from "next/dynamic";
 import { useState } from "react";

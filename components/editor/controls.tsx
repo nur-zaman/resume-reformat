@@ -4,7 +4,6 @@ import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import type { MoveDirection } from "@/lib/editor";
 
-/** Small, square, icon-style control button used throughout the editor chrome. */
 export function IconButton({
   label,
   onClick,
@@ -86,7 +85,6 @@ export function VisibilityToggle({
   );
 }
 
-/** Two-step delete so a single misclick cannot destroy content (PRD §12). */
 export function ConfirmDeleteButton({
   label,
   onDelete,

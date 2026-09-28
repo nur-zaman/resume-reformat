@@ -6,15 +6,8 @@ import { ResumePdf } from "./resume-pdf";
 import { realisticResume, emptyResume, longResume } from "@/lib/resume/fixtures";
 import type { ResumeDoc } from "@/lib/resume";
 
-/**
- * Node-side smoke tests for the PDF renderer (PRD §10 visual-regression layer).
- *
- * `renderToBuffer` exercises the full react-pdf pipeline (fonts, layout engine,
- * pagination props, every component) and proves the document renders end-to-end without
- * throwing or producing an empty file — the proxy for "exports without clipped content"
- * that is achievable without a browser. Fonts are registered from the local TTFs because
- * the app's browser URLs (lib/render/pdf-fonts.ts) cannot be fetched in node.
- */
+// Fonts are registered from local TTFs because the app's browser font URLs
+// (lib/render/pdf-fonts.ts) can't be fetched in node.
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fontsDir = path.resolve(here, "../../../public/fonts/source-serif-4");
@@ -64,7 +57,6 @@ describe("ResumePdf (node renderToBuffer)", () => {
   it("renders the long multi-page resume", async () => {
     const buf = await renderPdf(longResume);
     expect(isPdf(buf)).toBe(true);
-    // A multi-page document is materially larger than the single-page fixture.
     expect(buf.length).toBeGreaterThan(3000);
   }, 30000);
 });
