@@ -1,146 +1,145 @@
+<div align="center">
+
 # Resume Reformatter
 
-![Resume Reformatter](app/opengraph-image.png)
+**Tailor your resume to every job, without the rewrite.**
 
-An AI resume tailoring app. Import a base resume (pasted text or PDF), paste a job
-description, and get a tailored draft where every AI-introduced claim has to be accepted or
-dismissed before the resume can be exported as a PDF. Tailored resumes double as job
-applications with a small pipeline tracker.
+Paste a job description, get a tailored draft, and approve every AI-written claim before
+exporting a clean PDF.
 
-![Dashboard](docs/dashboard.png)
+[![CI](https://github.com/nur-zaman/resume-reformat/actions/workflows/ci.yml/badge.svg)](https://github.com/nur-zaman/resume-reformat/actions/workflows/ci.yml)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white)
+![Gemini](https://img.shields.io/badge/AI-Gemini-8E75B2?logo=googlegemini&logoColor=white)
+
+<img src="docs/screenshots/landing.jpg" alt="Resume Reformatter landing page" width="100%" />
+
+</div>
 
 ## Features
 
-- **Resume import:** Gemini parses pasted text or an uploaded PDF into a structured resume
-  document.
-- **Tailoring with claim review:** the model rewrites content for a target role. Anything it
-  can't trace back to the base resume is flagged as a proposal that you accept or dismiss.
-  Export stays blocked until every proposal is resolved.
-- **Block editor:** reorder, hide, and edit sections with Tiptap rich-text fields, next to a
-  live preview.
-- **PDF export:** generated in the browser with `@react-pdf/renderer`, from the same document
-  model and typography tokens as the HTML preview.
-- **Job tracker:** stages, applied and follow-up dates, posting link, notes, and a stage
-  timeline for each tailored resume.
-- **Invite-only access:** email + password sign-in gated by a Postgres allowlist, with
-  per-user and per-IP generation rate limits.
+### Tailor to any role
+
+Pick a base resume, paste the job description, and generate a draft rewritten for that role.
+Job title and company are inferred when you leave them blank.
+
+<img src="docs/screenshots/tailor.png" alt="Tailoring form with a pasted job description" width="100%" />
+
+### Review every AI claim
+
+Content the model can't trace back to your base resume is flagged as a proposal with an
+explanation. Accept, edit, or delete each one. Export stays locked until nothing is pending.
+
+<img src="docs/screenshots/review.png" alt="Editor showing an AI-proposed claim beside the live preview" width="100%" />
+
+### One workspace for every version
+
+Keep your base resume alongside every tailored version, each with its review status.
+
+<img src="docs/screenshots/dashboard.png" alt="Workspace dashboard with a base resume and tailored jobs" width="100%" />
+
+### Print-ready PDF
+
+The HTML preview and the PDF export render the same document model with the same
+typography, so what you see is what you send.
+
+<img src="docs/screenshots/preview.png" alt="Resume preview with PDF export" width="100%" />
+
+### Track your applications
+
+Each tailored resume doubles as an application with a stage, applied and follow-up dates,
+the posting link, notes, and a timeline.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/tracker.png" alt="Job tracker list" /></td>
+    <td width="50%"><img src="docs/screenshots/tracker-panel.png" alt="Application detail panel" /></td>
+  </tr>
+</table>
 
 ## Tech stack
 
-| Area | Choice |
+| Area | Tools |
 | --- | --- |
 | Framework | Next.js 16 (App Router, Server Actions), React 19, TypeScript |
-| Styling | Tailwind CSS v4 with CSS `@theme` tokens |
-| Data & auth | Supabase (Postgres, Auth, Row Level Security) |
-| AI | Vercel AI SDK + Google Gemini, structured output validated with Zod |
+| Styling | Tailwind CSS v4 |
+| Data & auth | Supabase: Postgres, Auth, Row Level Security |
+| AI | Vercel AI SDK, Google Gemini, Zod structured output |
 | Editor | Tiptap 3 |
-| PDF | `@react-pdf/renderer` with embedded Source Serif 4 |
-| Testing | Vitest (unit + renderer snapshots), pgTAP (RLS policies) |
+| PDF | `@react-pdf/renderer` |
+| Testing | Vitest, pgTAP |
 
-## Architecture
+## Engineering highlights
 
-```mermaid
-flowchart LR
-  UI["Client components<br/>(editor, tailoring, tracker)"] -->|Server Action| A["authorize()<br/>session + allowlist"]
-  A --> V["Input guards<br/>+ rate limit"]
-  V --> M["Gemini<br/>lean Zod schema"]
-  M --> AS["Deterministic assembler<br/>IDs, rich text, review items"]
-  AS --> Z["Strict validation<br/>ResumeDoc invariants"]
-  Z -->|draft| UI
-  UI -->|save| DB[("Postgres<br/>RLS on every table")]
-  DB --> R["Shared render layer"]
-  R --> HTML["HTML preview"]
-  R --> PDF["react-pdf export"]
-```
+- **Single source of truth.** Resumes are versioned JSON documents with schema migrations and
+  invariant checks. The editor, HTML preview, and PDF renderer all read the same model.
+- **Guarded AI output.** The model fills a small schema, and a deterministic assembler builds
+  the final document from it. Strict validation runs before anything reaches the user, and
+  schema failures get one retry with the errors fed back to the model.
+- **Human in the loop.** AI results come back as drafts. Nothing is saved until the user
+  reviews it, and unverified claims block export.
+- **Layered security.** Invite-only access, server-side authorization on every action, and
+  Postgres RLS policies as the final boundary.
+- **Rate limiting.** Per-user and per-IP limits run inside Postgres, so they hold across
+  serverless instances with no extra infrastructure.
 
-- **One canonical document.** A resume is a versioned JSON document (`lib/resume/schema.ts`)
-  with a migration path and cross-field invariant checks. The editor, HTML preview, and PDF
-  renderer all consume the same model through `lib/render`.
-- **Two-layer AI output.** The model fills a deliberately small schema. A deterministic
-  assembler turns that into the full document (stable IDs, rich text, pinned header, review
-  items). Model output never reaches the database without passing strict validation, and a
-  schema failure gets one retry with the validation errors fed back to the model.
-- **Nothing is persisted from AI output directly.** Parsing and tailoring return drafts. The
-  user reviews them and saves explicitly.
-- **Defense in depth.** The proxy only refreshes sessions and redirects. Authorization happens
-  in `lib/auth/guards.ts` on every server action and page, and Postgres RLS policies (checking
-  ownership plus current allowlist membership) are the final boundary. Queries are also
-  scoped by `user_id`.
-- **Rate limiting in Postgres.** A fixed-window counter behind a `security definer` function,
-  so limits hold across serverless instances without extra infrastructure.
-
-### Project layout
+## Project structure
 
 ```
-app/
-  (auth)/            sign-in
-  (app)/             protected routes: dashboard, editor, tailor, preview, tracker
-  auth/confirm/      Supabase email-link callback
-components/          UI by feature (editor, preview, dashboard, tracker, landing, ui)
+app/                 routes: landing, sign-in, dashboard, editor, tailor, preview, tracker
+components/          UI grouped by feature
 lib/
-  resume/            document model: schema, validation, migrations, CRUD actions, queries
-  parsing/           resume import: prompt, model call, schema, assembler, action
-  tailoring/         tailoring: prompt, model call, schema, assembler, action
-  applications/      application stages, timeline, stats, update action
-  editor/            editor state reducer and selectors
-  render/            shared HTML/PDF rendering primitives and tokens
-  ai/                model config, error classification, generation settings, logging
-  auth/              guards, allowlist, auth actions
-  ratelimit/         Postgres-backed rate limiting
-  supabase/          server, browser, and admin clients
-supabase/
-  migrations/        schema, RLS policies, functions
-  tests/             pgTAP RLS tests
-proxy.ts             session refresh and UX redirects
+  resume/            document model, validation, migrations, persistence
+  parsing/           resume import pipeline
+  tailoring/         tailoring pipeline
+  applications/      application tracking
+  editor/            editor state
+  render/            shared HTML/PDF rendering
+  ai/ auth/ ratelimit/ supabase/
+supabase/            migrations and RLS tests
 ```
 
 ## Getting started
 
-Requirements: Node 20+, a Supabase project, and a Google Gemini API key.
+**Prerequisites:** Node.js 20+, a [Supabase](https://supabase.com) project, and a
+[Gemini API key](https://aistudio.google.com/apikey).
 
-1. Install dependencies:
+```bash
+git clone https://github.com/nur-zaman/resume-reformat.git
+cd resume-reformat
+npm install
+cp .env.example .env.local
+```
 
-   ```bash
-   npm install
-   ```
+Fill in `.env.local`:
 
-2. Set up the database by following [`supabase/README.md`](./supabase/README.md) (migrations,
-   allowlist seed, auth settings).
+| Variable | Description |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key |
+| `SUPABASE_SECRET_KEY` | Supabase secret key (server only) |
+| `SITE_URL` | App origin, e.g. `http://localhost:3000` |
+| `AI_MODEL_ID` | Gemini model id, e.g. `gemini-3.1-flash-lite` |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini API key (server only) |
 
-3. Configure the environment:
+Set up the database by following [`supabase/README.md`](./supabase/README.md), then start
+the app:
 
-   ```bash
-   cp .env.example .env.local
-   ```
+```bash
+npm run dev
+```
 
-   | Variable | Scope | Purpose |
-   | --- | --- | --- |
-   | `NEXT_PUBLIC_SUPABASE_URL` | public | Supabase project URL |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | public | Supabase publishable key |
-   | `SUPABASE_SECRET_KEY` | server | Admin key for allowlist checks and account creation |
-   | `SITE_URL` | server | Canonical origin for auth redirects |
-   | `AI_MODEL_ID` | server | Gemini model id, e.g. `gemini-3.1-flash-lite` |
-   | `GOOGLE_GENERATIVE_AI_API_KEY` | server | Gemini API key |
-
-4. Start the dev server:
-
-   ```bash
-   npm run dev
-   ```
-
-   Open http://localhost:3000 and sign in with an email that's in the `allowed_emails` table.
+Open [localhost:3000](http://localhost:3000) and sign in with an email from the
+`allowed_emails` table.
 
 ## Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript, no emit |
-| `npm test` | Vitest unit and snapshot tests |
+| `npm run dev` | Start the development server |
+| `npm run build` | Create a production build |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run the TypeScript compiler |
+| `npm test` | Run unit and snapshot tests |
 | `npm run db:push` | Apply migrations to the linked Supabase project |
-
-RLS tests run with pgTAP against a Supabase Postgres database. See
-[`supabase/README.md`](./supabase/README.md).
