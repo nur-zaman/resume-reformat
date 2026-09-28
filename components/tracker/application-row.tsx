@@ -3,8 +3,8 @@ import {
   isClosedStage,
   type ApplicationStage,
   type StageHistoryEntry,
-  type TailoredStatus,
-} from "@/lib/resume";
+} from "@/lib/applications/stages";
+import type { TailoredStatus } from "@/lib/resume";
 import { ApplicationPanel } from "./application-panel";
 import { ExportButton } from "@/components/dashboard/export-button";
 import { actionSecondary, actionDisabled } from "@/components/dashboard/ui";

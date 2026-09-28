@@ -10,6 +10,9 @@ import { isEmailAllowed } from "@/lib/auth/allowlist";
  * server action and route handler should gate on `requireAllowlistedUser`.
  */
 
+export const SESSION_EXPIRED_MESSAGE =
+  "Your session has expired. Refresh the page and sign in again.";
+
 export type AuthenticatedUser = { id: string; email: string };
 
 /** Returns minimal identity claims from a cryptographically verified JWT. */

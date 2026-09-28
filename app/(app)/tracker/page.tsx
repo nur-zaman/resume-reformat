@@ -3,8 +3,8 @@ import {
   parseStageHistory,
   APPLICATION_STAGES,
   type ApplicationStage,
-  type TailoredStatus,
-} from "@/lib/resume";
+} from "@/lib/applications/stages";
+import type { TailoredStatus } from "@/lib/resume";
 import { ApplicationList } from "@/components/tracker/application-list";
 import type { ApplicationView } from "@/components/tracker/application-row";
 

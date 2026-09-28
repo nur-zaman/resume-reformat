@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { applicationStats, type ApplicationStats } from "@/lib/resume";
+import { applicationStats, type ApplicationStats } from "@/lib/applications/stages";
 import { ApplicationRow, type ApplicationView, APP_COLS } from "./application-row";
 
 /**

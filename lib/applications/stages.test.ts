@@ -7,7 +7,7 @@ import {
   parseStageHistory,
   type ApplicationStatRow,
   type StageState,
-} from "./application";
+} from "./stages";
 
 const NOW = "2026-06-26T12:00:00.000Z";
 const EARLIER = "2026-06-01T09:00:00.000Z";

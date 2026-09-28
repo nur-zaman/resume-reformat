@@ -1,4 +1,4 @@
-import { STAGE_LABELS, type ApplicationStage } from "@/lib/resume";
+import { STAGE_LABELS, type ApplicationStage } from "@/lib/applications/stages";
 import { cn } from "@/lib/utils/cn";
 
 /**

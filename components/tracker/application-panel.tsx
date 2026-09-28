@@ -8,8 +8,8 @@ import {
   isClosedStage,
   type ApplicationStage,
   type StageHistoryEntry,
-} from "@/lib/resume";
-import { updateApplication, type ApplicationPatch } from "@/lib/resume/actions";
+} from "@/lib/applications/stages";
+import { updateApplication, type ApplicationPatch } from "@/lib/applications/actions";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/text-input";
