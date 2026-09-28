@@ -1,15 +1,22 @@
-# Supabase setup (M1)
+# Supabase setup
 
 This project targets hosted Supabase and uses the current publishable/secret API
 keys. The legacy `anon` and `service_role` environment variables are not used.
 
 ## 1. Apply schema and RLS
 
-Run these files in order through the SQL editor, or push them with a linked
-Supabase CLI project:
+Push the migrations with a linked Supabase CLI project (`npm run db:push`), or run
+every file in `migrations/` in numeric order through the SQL editor:
 
-1. `migrations/0001_init.sql` - schema, constraints, private functions, triggers.
-2. `migrations/0002_rls.sql` - explicit Data API grants, RLS, and policies.
+| Migration | Contents |
+| --- | --- |
+| `0001_init.sql` | Profiles, allowlist, private helper functions, triggers |
+| `0002_rls.sql` | Data API grants, RLS, and policies |
+| `0003_resumes.sql` | Multi-resume table with RLS |
+| `0004_rate_limits.sql` | Postgres-backed fixed-window rate limiter |
+| `0005_waitlist.sql` | Public waitlist signups |
+| `0006_tailored_resumes.sql` | Tailored resume metadata and review items |
+| `0007_application_tracking.sql` | Application stages, dates, and timeline |
 
 Keep the `private` schema out of **Project Settings -> API -> Exposed schemas**.
 The RLS allowlist helper is deliberately defined there because it bypasses RLS.
@@ -22,9 +29,9 @@ operations this app needs. The `allowed_emails` table remains inaccessible to
 ## 2. Seed the allowlist
 
 Edit `seed.sql` to the owner email (stored lowercase and trimmed), then run it.
-Add or remove invited users directly in `allowed_emails`; there is no admin UI in
-v1. Removing an email takes effect immediately through RLS, including for an
-existing session.
+Add or remove invited users directly in `allowed_emails`; there is no admin UI.
+Removing an email takes effect immediately through RLS, including for an existing
+session.
 
 ## 3. Configure Auth (password sign-in)
 
