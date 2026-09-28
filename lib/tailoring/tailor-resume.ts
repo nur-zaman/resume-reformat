@@ -10,13 +10,6 @@ import { buildTailorSystemPrompt, buildTailorUserPrompt } from "./prompt";
 import { buildRetryFeedback } from "@/lib/ai/retry-feedback";
 import { logAiEvent } from "@/lib/ai/log";
 
-/**
- * Resume tailoring orchestration (M5). Pure AI concern — auth, input validation, rate
- * limiting, and assembly live in the server action, keeping this unit-testable via the
- * injected `generate` seam (no network). Implements the FR-13 retry policy: one corrective
- * retry, and ONLY on a schema-validation failure. Mirrors `parse-resume.ts`.
- */
-
 export type TailorInput = { baseResume: ResumeDoc; jobDescription: string };
 
 export type GenerateTailorFn = (args: {
@@ -28,19 +21,15 @@ export type TailorResumeResult =
   | { ok: true; output: AiTailorOutput; attempts: 1 | 2 }
   | { ok: false; category: AiErrorCategory; attempts: 1 | 2 };
 
-/** Production generator: the configured Gemini model via the Vercel AI SDK. */
 function defaultGenerate(): GenerateTailorFn {
   const cfg = getAiConfig();
   const provider = createGoogleGenerativeAI({ apiKey: cfg.apiKey });
   const model = provider(cfg.modelId);
-  // Tailoring is the reasoning-heavy step (what to surface, is a unit a proposal, infer the
-  // job), so it gets a little reasoning budget. Gated on the model family (Gemini 3 →
-  // thinkingLevel "low"; 2.5 → temperature + dynamic thinkingBudget). See ./generation-config.
   const knobs = tailorKnobs(cfg.modelId);
 
-  // Keep Gemini's native structured-output mode ON; AiTailorSchema is REQUIRED throughout
-  // so the constrained decoder doesn't drop fields. Our explicit feedback-bearing retry is
-  // the ONLY retry (maxRetries: 0) — it protects the free quota (PRD §11).
+  // Keep structuredOutputs ON and AiTailorSchema fields REQUIRED - the constrained decoder
+  // drops non-required fields. maxRetries: 0 - our explicit retry is the only one; avoids
+  // silently burning the free quota.
   return async ({ system, prompt }) => {
     const { object } = await generateObject({
       model,
@@ -79,7 +68,6 @@ export async function tailorResume(
   try {
     generate = opts?.generate ?? defaultGenerate();
   } catch (err) {
-    // Missing/invalid config (e.g. no API key) → classified, no AI call made.
     const category = classifyAiError(err);
     log("error", 1, category);
     return { ok: false, category, attempts: 1 };
@@ -95,11 +83,9 @@ export async function tailorResume(
   } catch (err) {
     const category = classifyAiError(err);
     if (category !== "validation") {
-      // auth / quota / network / unknown — retrying cannot help (FR-13, §11).
       log("error", 1, category);
       return { ok: false, category, attempts: 1 };
     }
-    // Exactly one retry, with corrective feedback derived from the failure.
     const retryPrompt = `${basePrompt}\n\n${buildRetryFeedback(err)}`;
     try {
       const output = await generate({ system, prompt: retryPrompt });

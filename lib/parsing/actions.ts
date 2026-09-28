@@ -37,11 +37,8 @@ export async function parseResumeAction(
   _prev: ParseResumeState,
   formData: FormData,
 ): Promise<ParseResumeState> {
-  // 1. Authorize before reading input or incurring any AI cost.
   if (!(await authorize())) return parseError("auth");
 
-  // 2. Deterministic input guard — rejected BEFORE any AI call and never retried. A PDF
-  //    upload takes precedence over the textarea when both are present.
   const file = formData.get("resumeFile");
   let source: ParseSource;
   if (file instanceof File && file.size > 0) {
@@ -65,15 +62,12 @@ export async function parseResumeAction(
     source = { kind: "text", text: input.text };
   }
 
-  // 3. AI parse (handles its own single retry on schema failure).
   const parsed = await parseResume(source);
   if (!parsed.ok) return parseError(parsed.category);
 
-  // 4. Deterministic assembly into the canonical doc, then the strict gate.
   const envelope = assembleResumeDoc(parsed.output);
   const checked = validateParseResult(envelope);
   if (!checked.ok) {
-    // An assembled doc that fails validation is an assembler bug, not bad model output.
     logAiEvent({
       requestId: crypto.randomUUID(),
       event: "parse",
@@ -86,6 +80,5 @@ export async function parseResumeAction(
     return parseError("validation");
   }
 
-  // 5. Return the draft for review — NOT persisted (review precedes the first save).
   return { status: "success", result: checked.data };
 }

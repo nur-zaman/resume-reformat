@@ -1,31 +1,7 @@
 import { z } from "zod";
 
-/**
- * The lean schema the AI model fills when parsing pasted resume text or an uploaded PDF
- * (M4).
- *
- * This is deliberately NOT the canonical `ResumeDoc`. The model never mints ids,
- * `schemaVersion`, `contentId`s, or review items — those carry `z.uuid()` / literal
- * constraints that an LLM cannot reliably satisfy and that would only waste tokens.
- * Instead the model returns plain semantic content here, and `assembleResumeDoc`
- * (see `./assemble`) deterministically builds the canonical document through the
- * factories (the only sanctioned id minters), after which `validateParseResult` is the
- * strict gate.
- *
- * IMPORTANT — every field is REQUIRED (no `.optional()` / `.default()`). This schema is
- * sent to Gemini as its structured-output `responseSchema`, and Gemini's constrained
- * decoder simply SKIPS fields that aren't required — which previously made it return a
- * name and empty arrays for every section. Requiring all fields (with `.describe()`
- * telling the model to use "" / [] when a fact is absent) is what makes it transcribe the
- * whole document. The leniency that used to live here now lives entirely in
- * `assembleResumeDoc`, which treats empty strings/arrays as absent (drops empty bullets,
- * omits empty sections, demotes malformed contacts).
- *
- * Rich text is captured as plain strings (one per paragraph / bullet). Inline emphasis
- * and links inside sentences are not extracted in v1 (parsing is transcription; the user
- * re-adds formatting during review). Header links/contacts are captured structurally.
- */
-
+// Every field is REQUIRED (no .optional()/.default()) - Gemini's structured-output decoder
+// skips non-required fields, which previously returned empty arrays for every section.
 const AiContact = z.object({
   kind: z
     .enum(["email", "phone", "location", "custom"])

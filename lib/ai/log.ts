@@ -1,10 +1,6 @@
 import "server-only";
 
-/**
- * Metadata-only operational logging for AI calls (PRD §11). NEVER pass raw resume text,
- * job descriptions, prompts, model responses, ZodError contents, tokens, or keys here —
- * only the fields below, which cannot leak user content.
- */
+// Metadata only - never pass raw resume text, job descriptions, prompts, model responses, or credentials here.
 export type AiLogRecord = {
   requestId: string;
   event: "parse" | "tailor";

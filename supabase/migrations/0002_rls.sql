@@ -1,4 +1,3 @@
--- M1 Foundations - Row Level Security and Data API grants.
 -- Every policy combines ownership with current allowlist membership.
 
 alter table public.profiles       enable row level security;
@@ -6,8 +5,8 @@ alter table public.allowed_emails enable row level security;
 alter table public.jobs           enable row level security;
 alter table public.generations    enable row level security;
 
--- Data API access is opt-in on new Supabase projects. Grant only operations the
--- application needs; RLS below controls which rows authenticated users can reach.
+-- Data API access is opt-in on new Supabase projects; grants below are scoped to what
+-- the app needs, and RLS controls which rows authenticated users can reach.
 revoke all on table public.profiles, public.allowed_emails,
   public.jobs, public.generations from anon, authenticated, service_role;
 

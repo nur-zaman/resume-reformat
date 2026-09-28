@@ -1,6 +1,4 @@
--- pgTAP RLS suite: cross-user isolation, allowlist enforcement, explicit Data
--- API grants, privileged-function isolation, and generation/job ownership.
--- The transaction rolls back, so it leaves no test data behind.
+-- RLS test suite; runs in a rolled-back transaction so it leaves no test data behind.
 
 begin;
 create extension if not exists pgtap;
@@ -24,7 +22,7 @@ select ok(
   ),
   'authenticated cannot execute the privileged auth trigger function');
 
--- Fixtures run as the privileged session role; the auth trigger creates profiles.
+-- Runs as the privileged role; the auth trigger auto-creates profiles.
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'a@test.dev'),
   ('22222222-2222-2222-2222-222222222222', 'b@test.dev');
@@ -46,7 +44,6 @@ values
    '11111111-1111-1111-1111-111111111111',
    '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, 1, 'test', 'test', 'v1');
 
--- Act as user A.
 set local role authenticated;
 select set_config('request.jwt.claims',
   '{"sub":"11111111-1111-1111-1111-111111111111","email":"a@test.dev","role":"authenticated"}',
@@ -85,7 +82,6 @@ select throws_ok(
   '23503', null,
   'a generation cannot reference another user''s job');
 
--- Act as user B.
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claims',
@@ -101,7 +97,8 @@ select is(
    where user_id = '11111111-1111-1111-1111-111111111111')::int, 0,
   'user B cannot see user A''s jobs');
 
--- De-allowlist user A, then reuse the existing user A session claims.
+-- De-allowlist user A mid-session (same claims) - tests that revocation takes effect
+-- without a new sign-in.
 reset role;
 delete from public.allowed_emails where email = 'a@test.dev';
 
@@ -118,8 +115,8 @@ select is(
   (select count(*) from public.jobs)::int, 0,
   'de-allowlisting blocks job access in an existing session');
 
--- Anonymous Auth users carry the authenticated Postgres role; reject them even
--- if their email claim happens to match the allowlist.
+-- Anonymous Auth users carry the authenticated Postgres role; reject them even if their
+-- email claim happens to match the allowlist.
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claims',

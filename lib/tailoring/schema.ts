@@ -1,31 +1,9 @@
 import { z } from "zod";
 
-/**
- * The lean schema the AI model fills when TAILORING a base resume to a job description
- * (M5). Like the parse schema (`./parse-schema`), this is deliberately NOT the canonical
- * `ResumeDoc`: the model never mints ids, `schemaVersion`, `contentId`s, or review items.
- * It returns plain content plus per-unit proposal markers, and `assembleTailoredResult`
- * (see `./tailor-assemble`) deterministically builds the canonical `GenerationResult` —
- * minting every id, stamping a `contentId` on each proposed top-level node, and emitting a
- * matching pending `ReviewItem`.
- *
- * IMPORTANT — every field is REQUIRED (no `.optional()` / `.default()`), exactly as in the
- * parse schema: Gemini's constrained decoder SKIPS non-required fields. "Absent" is encoded
- * as "" / [] / false, and `.describe()` tells the model so.
- *
- * The HEADER is intentionally absent: identity (name, contacts, links) is pinned from the
- * base resume in assembly and is never AI-writable — the strongest possible guard against
- * fabrication or prompt injection from the (untrusted) job description. The model may only
- * propose a tailored `headline`.
- *
- * Proposal granularity is the top-level rich-text node, because only paragraph / bulletList
- * / orderedList nodes can carry a `contentId` (a `listItem` cannot). So summary and
- * custom-section paragraphs are proposable PER PARAGRAPH, while an experience/education
- * entry's bullets are ATOMIC — the whole bullet set is either clean (reworded facts) or a
- * single proposal anchored on the one bulletList node.
- */
-
-/** Marks a single unit as a NEW/strengthened claim (a proposal) with a JD-tied reason. */
+// Every field is REQUIRED - Gemini's constrained decoder skips non-required fields.
+// HEADER is intentionally absent from this schema: identity (name/contacts/links) is
+// pinned from the base resume in assembly and is never AI-writable - the guard against
+// fabrication or prompt injection from the untrusted job description.
 const AiProposable = z.object({
   proposed: z
     .boolean()

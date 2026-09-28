@@ -1,10 +1,8 @@
 import "server-only";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Secret-key Supabase client. It bypasses RLS, stays server-only, and is used
- * solely for the pre-auth allowlist check. Never import it into client code.
- */
+// Bypasses RLS; server-only. Used solely for the pre-auth allowlist check - never
+// import into client code.
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;

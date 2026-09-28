@@ -13,28 +13,15 @@ import {
 } from "./prompt";
 import { logAiEvent } from "@/lib/ai/log";
 
-/**
- * Resume parse orchestration (M4). Pure AI concern — auth, input validation, and assembly
- * live in the server action, which keeps this unit-testable by injecting a `generate` seam
- * (no network). Implements the FR-13 retry policy: one corrective retry, and ONLY on a
- * schema-validation failure.
- *
- * The source is either pasted text or an uploaded PDF. PDFs are sent to Gemini directly as
- * a file part (the model reads them natively) rather than extracting text ourselves.
- */
-
-/** What the user gave us to transcribe. */
 export type ParseSource =
   | { kind: "text"; text: string }
   | { kind: "pdf"; bytes: Uint8Array; filename?: string };
 
-/** An attached file for multimodal input (currently only PDF). */
 export type ParseFile = { bytes: Uint8Array; mediaType: string; filename?: string };
 
 export type GenerateObjectFn = (args: {
   system: string;
   prompt: string;
-  /** When present, sent alongside the prompt as a file message part. */
   file?: ParseFile;
 }) => Promise<AiParseOutput>;
 
@@ -42,21 +29,14 @@ export type ParseResumeResult =
   | { ok: true; output: AiParseOutput; attempts: 1 | 2 }
   | { ok: false; category: AiErrorCategory; attempts: 1 | 2 };
 
-/** Production generator: the configured Gemini model via the Vercel AI SDK. */
 function defaultGenerate(): GenerateObjectFn {
   const cfg = getAiConfig();
   const provider = createGoogleGenerativeAI({ apiKey: cfg.apiKey });
   const model = provider(cfg.modelId);
-  // Transcription profile: deterministic, minimal reasoning. Gated on the model family
-  // (Gemini 3 → thinkingLevel; 2.5 → temperature + thinkingBudget). See ./generation-config.
   const knobs = parseKnobs(cfg.modelId);
 
-  // Keep Gemini's native structured-output mode ON (the default). It binds the model to
-  // our exact field names; with it OFF the model invents its own shape (`company`,
-  // `highlights`, summary-as-string…) and validation fails. The complement is that
-  // `AiParseSchema` is REQUIRED throughout (no .optional()/.default()) — Gemini's
-  // constrained decoder skips non-required fields, which previously returned empty
-  // sections. See lib/resume/parse-schema.ts.
+  // Keep structuredOutputs ON and AiParseSchema fields REQUIRED - Gemini's constrained
+  // decoder skips non-required fields, which previously returned empty sections.
   return async ({ system, prompt, file }) => {
     if (file) {
       const messages: ModelMessage[] = [
@@ -73,7 +53,7 @@ function defaultGenerate(): GenerateObjectFn {
         schema: AiParseSchema,
         system,
         messages,
-        // Our explicit, feedback-bearing retry is the ONLY retry — protects free quota.
+        // maxRetries: 0 - our explicit retry is the only one; avoids silently burning the free quota.
         maxRetries: 0,
         ...knobs,
       });
@@ -117,7 +97,6 @@ export async function parseResume(
   try {
     generate = opts?.generate ?? defaultGenerate();
   } catch (err) {
-    // Missing/invalid config (e.g. no API key) → classified, no AI call made.
     const category = classifyAiError(err);
     log("error", 1, category);
     return { ok: false, category, attempts: 1 };
@@ -138,11 +117,9 @@ export async function parseResume(
   } catch (err) {
     const category = classifyAiError(err);
     if (category !== "validation") {
-      // auth / quota / network / unknown — retrying cannot help (FR-13, §11).
       log("error", 1, category);
       return { ok: false, category, attempts: 1 };
     }
-    // Exactly one retry, with corrective feedback derived from the failure.
     const retryPrompt = `${basePrompt}\n\n${buildRetryFeedback(err)}`;
     try {
       const output = await generate({ system, prompt: retryPrompt, file });

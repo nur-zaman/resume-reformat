@@ -1,6 +1,5 @@
 import "server-only";
 
-/** Return the configured canonical app origin used in outbound auth links. */
 export function getSiteUrl(): string {
   const value = process.env.SITE_URL;
   if (!value) {

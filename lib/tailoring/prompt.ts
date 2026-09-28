@@ -2,15 +2,8 @@ import "server-only";
 import { richTextToPlainLines } from "@/lib/resume/richtext-build";
 import type { Block, ResumeDoc } from "@/lib/resume/schema";
 
-/**
- * Prompt construction for resume tailoring (M5, PRD §6.2). Tailoring adapts the candidate's
- * existing facts to a job: the model may rewrite/reorder/condense/omit freely but must flag
- * any net-new or strengthened claim as a proposal, and must never alter fixed facts. The
- * pasted job description is treated strictly as untrusted DATA, never as instructions
- * (FR-12 prompt-injection hardening). Identity (name/contacts/links) is pinned in assembly
- * and is deliberately not writable by the model.
- */
-
+// Job description is untrusted DATA, never instructions (prompt-injection hardening);
+// identity (name/contacts/links) is pinned in assembly and not model-writable.
 export const TAILOR_PROMPT_VERSION = "tailor-v2";
 
 const JD_DELIMITER = "<<<JOB_DESCRIPTION>>>";
@@ -68,7 +61,6 @@ export function buildTailorSystemPrompt(): string {
   ].join("\n");
 }
 
-/** Render the base resume into compact, readable plain text the model can tailor. */
 function serializeBaseResume(doc: ResumeDoc): string {
   const out: string[] = [];
   const section = (heading: string, lines: string[]) => {
@@ -155,10 +147,8 @@ export function buildTailorUserPrompt(
   baseResume: ResumeDoc,
   jobDescription: string,
 ): string {
-  // Spotlighting with a randomized per-request marker: an attacker embedding text in the
-  // (untrusted) job description cannot predict the nonce, so they cannot forge the closing
-  // delimiter to "escape" the data region. The fixed JD_DELIMITER literal is retained inside
-  // the tag for provenance and so callers/tests can still recognise the boundary.
+  // Randomized per-request marker: an attacker in the (untrusted) job description can't
+  // predict the nonce, so can't forge the closing delimiter to escape the data region.
   const tag = `${JD_DELIMITER}-${crypto.randomUUID().slice(0, 8)}`;
   return [
     "Tailor the base resume below to the job description.",

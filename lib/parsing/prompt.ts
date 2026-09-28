@@ -1,12 +1,6 @@
 import "server-only";
 
-/**
- * Prompt construction for resume parsing (M4). Parsing is transcription, not authoring:
- * the model reproduces the user's facts into the lean structure and invents nothing
- * (PRD §6.1, principle "no invisible fabrication"). The pasted text is treated strictly
- * as untrusted DATA, never as instructions (FR-12 prompt-injection hardening).
- */
-
+// Resume text is untrusted DATA, never instructions (prompt-injection hardening).
 export const PARSE_PROMPT_VERSION = "parse-v2";
 
 const DELIMITER = "<<<RESUME_TEXT>>>";
@@ -52,11 +46,6 @@ export function buildParseUserPrompt(resumeText: string): string {
   ].join("\n");
 }
 
-/**
- * Instruction for the PDF path: the resume arrives as an attached file part rather than
- * inline text. Same transcription contract and injection hardening — any instruction-like
- * text inside the document is data, not a command.
- */
 export function buildParsePdfPrompt(): string {
   return [
     "Transcribe the attached PDF resume into the required structure.",
@@ -69,5 +58,4 @@ export function buildParsePdfPrompt(): string {
   ].join("\n");
 }
 
-// The single-retry feedback builder is shared with the tailor pipeline (FR-13).
 export { buildRetryFeedback } from "@/lib/ai/retry-feedback";

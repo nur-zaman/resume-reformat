@@ -1,19 +1,11 @@
 import "server-only";
 
-/**
- * Shared schema-retry feedback for the AI pipelines (FR-13). Both the parse and tailor
- * orchestrations append this to the single corrective retry: it names which fields/types
- * were wrong so the model can fix its shape. It may reference the model's own malformed
- * output and so must NEVER be logged.
- */
-
+// May reference the model's own malformed output - never log this.
 type ZodIssueLike = { path?: unknown[]; message?: string };
 
-/** Pull a list of Zod-style issues out of whatever the SDK threw, if present. */
 function extractIssues(error: unknown): ZodIssueLike[] {
   const seen = new Set<unknown>();
   let current: unknown = error;
-  // Walk the cause chain: NoObjectGeneratedError → TypeValidationError → ZodError.
   while (current && typeof current === "object" && !seen.has(current)) {
     seen.add(current);
     const issues = (current as { issues?: unknown }).issues;
@@ -23,9 +15,6 @@ function extractIssues(error: unknown): ZodIssueLike[] {
   return [];
 }
 
-/**
- * Compact, field-path feedback appended to the prompt for the single retry (FR-13).
- */
 export function buildRetryFeedback(error: unknown): string {
   const issues = extractIssues(error);
   const detail =

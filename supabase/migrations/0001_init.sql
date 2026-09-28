@@ -1,14 +1,8 @@
--- M1 Foundations - schema, functions, and triggers (PRD section 9).
--- RLS policies and Data API grants live in 0002_rls.sql. Run this first.
+-- RLS policies and Data API grants live in 0002_rls.sql; run this first.
 
--- Privileged helpers live outside exposed schemas. Keep `private` out of the
--- Data API's Exposed schemas setting.
+-- Keep `private` out of the Data API's Exposed schemas setting - these are privileged helpers.
 create schema if not exists private;
 revoke all on schema private from public;
-
--- ---------------------------------------------------------------------------
--- Tables
--- ---------------------------------------------------------------------------
 
 create table if not exists public.profiles (
   id                  uuid primary key references auth.users (id) on delete cascade,
@@ -62,11 +56,8 @@ create index if not exists jobs_user_id_idx on public.jobs (user_id);
 create index if not exists generations_user_id_idx on public.generations (user_id);
 create index if not exists generations_job_id_idx on public.generations (job_id);
 
--- ---------------------------------------------------------------------------
--- Allowlist gate. This SECURITY DEFINER function is intentionally in a private,
--- unexposed schema and checks only the caller's verified Auth JWT claims.
--- ---------------------------------------------------------------------------
-
+-- SECURITY DEFINER, intentionally in a private/unexposed schema; checks only the
+-- caller's verified Auth JWT claims.
 create or replace function private.is_current_user_allowed()
 returns boolean
 language sql
@@ -84,10 +75,6 @@ $$;
 grant usage on schema private to authenticated;
 revoke all on function private.is_current_user_allowed() from public, anon;
 grant execute on function private.is_current_user_allowed() to authenticated;
-
--- ---------------------------------------------------------------------------
--- Auto-create a profile row when an email Auth user is created.
--- ---------------------------------------------------------------------------
 
 create or replace function private.handle_new_user()
 returns trigger
@@ -109,10 +96,6 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function private.handle_new_user();
-
--- ---------------------------------------------------------------------------
--- Keep updated_at fresh.
--- ---------------------------------------------------------------------------
 
 create or replace function private.set_updated_at()
 returns trigger

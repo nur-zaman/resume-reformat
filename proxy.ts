@@ -2,14 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 
-/**
- * Next.js 16 "proxy" (formerly middleware). Two jobs, both UX-only:
- *  1. Verify and refresh the Supabase session by calling getClaims().
- *  2. Redirect unauthenticated navigation away from protected paths to /login.
- *
- * This is NOT a security boundary — it can be bypassed by calling APIs directly.
- * Real enforcement lives in server guards (requireAllowlistedUser) and Postgres RLS.
- */
+// Session refresh + UX redirect only - NOT a security boundary (bypassable by calling
+// APIs directly). Real enforcement is server guards (requireAllowlistedUser) + Postgres RLS.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const { url, publishableKey } = getSupabaseConfig();
@@ -35,7 +29,6 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // Verifies the JWT signature and refreshes near-expiry tokens.
   const { data } = await supabase.auth.getClaims();
 
   const path = request.nextUrl.pathname;
@@ -59,6 +52,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Run on everything except static assets and the auth callback route.
   matcher: ["/((?!_next/static|_next/image|favicon.ico|auth/).*)"],
 };

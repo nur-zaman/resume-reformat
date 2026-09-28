@@ -27,16 +27,6 @@ import type {
 } from "@/lib/resume/schema";
 import type { AiParseOutput } from "./schema";
 
-/**
- * Deterministically build the canonical `GenerationResult` from the lean AI output
- * (M4, PRD §6.1). This is the second layer of the parse pipeline: the model fills
- * `AiParseSchema` with plain content, and this function mints every stable id (via the
- * factories / `newId`), constructs valid rich-text bodies, sanitises URLs, and drops
- * empty sections. The result is designed to pass `validateParseResult` — it carries NO
- * review items (parsing is transcription) and no `contentId`s (those are minted only for
- * proposal-bearing nodes).
- */
-
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 function assembleContact(
@@ -44,8 +34,6 @@ function assembleContact(
 ): ContactItem {
   const value = input.value.trim();
   const label = (input.label ?? "").trim();
-  // The canonical schema rejects a malformed email value; demote it to a `custom`
-  // contact (preserving the text) rather than failing the whole parse.
   if (input.kind === "email" && value !== "" && !EMAIL_RE.test(value)) {
     const item = createContactItem("custom");
     return { ...item, value, label: label || "Email" };

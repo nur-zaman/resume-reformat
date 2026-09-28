@@ -1,9 +1,7 @@
 const SAFE_ORIGIN = "https://internal.invalid";
 
-/**
- * Accept only same-origin absolute paths for post-auth redirects.
- * Rejects protocol-relative URLs, backslash variants, and malformed input.
- */
+// Same-origin absolute paths only - rejects protocol-relative URLs, backslash variants,
+// and malformed input (prevents open redirects).
 export function getSafeNextPath(
   candidate: string | null,
   fallback = "/dashboard",

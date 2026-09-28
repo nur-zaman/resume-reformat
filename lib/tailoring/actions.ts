@@ -12,15 +12,6 @@ import { resolveStoredResume } from "@/lib/resume/load";
 import { validateJobDescriptionInput, MAX_JD_INPUT_CHARS } from "@/lib/resume/input";
 import type { GenerationResult } from "@/lib/resume/schema";
 
-/**
- * Tailoring server action (PRD §6.2). Like `parseResumeAction`, it gates on
- * `requireAllowlistedUser` (the real authorization boundary), rejects oversized input and
- * rate-limited callers BEFORE any AI cost, validates the assembled output, and returns a
- * DRAFT for client-side review. Nothing is persisted here — jobs/generations persistence is
- * M6; the reviewed draft is saved as a new resume via `createResume` (FR-14 holds trivially:
- * we never persist invalid output).
- */
-
 export type TailorState =
   | { status: "idle" }
   | {
@@ -46,12 +37,10 @@ export async function tailorResumeAction(
   _prev: TailorState,
   formData: FormData,
 ): Promise<TailorState> {
-  // 1. Authorize before reading input or incurring any AI cost.
   const auth = await authorize();
   if (!auth) return tailorError("auth");
   const { user, supabase } = auth;
 
-  // 2. Identify the base resume and read optional job metadata.
   const resumeId = String(formData.get("resumeId") ?? "");
   if (resumeId === "") {
     return tailorError("validation", "We couldn't find the base resume. Reopen it and try again.");
@@ -59,7 +48,6 @@ export async function tailorResumeAction(
   const userTitle = String(formData.get("jobTitle") ?? "").trim();
   const userCompany = String(formData.get("company") ?? "").trim();
 
-  // 3. Deterministic input guard — rejected BEFORE any AI call (FR-9, §11).
   const jd = validateJobDescriptionInput(String(formData.get("jobDescription") ?? ""));
   if (!jd.ok) {
     return tailorError(
@@ -70,7 +58,6 @@ export async function tailorResumeAction(
     );
   }
 
-  // 4. Per-user + per-IP rate limit (protect the free quota).
   const ip = await clientIp();
   const { allowed } = await enforceGenerationRateLimit({ userId: user.id, ip });
   if (!allowed) {
@@ -80,7 +67,7 @@ export async function tailorResumeAction(
     );
   }
 
-  // 5. Load the base resume, scoped by id + user (RLS is the final boundary).
+  // Scoped by id + user; RLS is the final boundary.
   const { data, error } = await supabase
     .from("resumes")
     .select("doc")
@@ -96,15 +83,12 @@ export async function tailorResumeAction(
   }
   const baseResume = resolved.doc;
 
-  // 6. AI tailor (handles its own single retry on schema failure).
   const tailored = await tailorResume({ baseResume, jobDescription: jd.text });
   if (!tailored.ok) return tailorError(tailored.category);
 
-  // 7. Deterministic assembly into the canonical envelope, then the strict gate.
   const envelope = assembleTailoredResult(tailored.output, baseResume);
   const checked = validateGenerationResult(envelope);
   if (!checked.ok) {
-    // An assembled doc that fails validation is an assembler bug, not bad model output.
     logAiEvent({
       requestId: crypto.randomUUID(),
       event: "tailor",
@@ -117,13 +101,10 @@ export async function tailorResumeAction(
     return tailorError("validation");
   }
 
-  // 8. Title rule (§6.2): user-entered wins; otherwise fall back to inferred metadata.
   const job = {
     title: userTitle || checked.data.inferredJob.title || "",
     company: userCompany || checked.data.inferredJob.company || "",
   };
 
-  // 9. Return the draft for review — NOT persisted (review precedes any save; M6 adds
-  //    jobs/generations history).
   return { status: "success", result: checked.data, job };
 }

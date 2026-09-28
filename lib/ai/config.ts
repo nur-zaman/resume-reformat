@@ -1,14 +1,5 @@
 import "server-only";
 
-/**
- * AI provider/model configuration (PRD §10: the exact model id is deployment config,
- * not hard-coded product behaviour; §11: credentials stay server-side).
- *
- * Lazy getter (mirrors `lib/supabase/config.ts`) so tests that never call the model do
- * not trip the missing-env guard at import time. No automatic provider fallback (§11):
- * the provider is a constant.
- */
-
 export type AiConfig = {
   provider: "google";
   modelId: string;
