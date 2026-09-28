@@ -3,7 +3,7 @@ import {
   BaseResumeCardSkeleton,
   TailoredJobRowSkeleton,
 } from "@/components/dashboard/skeletons";
-import { sectionLabel } from "@/components/dashboard/ui";
+import { sectionLabel } from "@/components/ui/styles";
 
 /**
  * Route-level loading state for the dashboard (screenshot 2). The page heading renders for

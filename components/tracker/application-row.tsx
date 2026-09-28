@@ -7,7 +7,7 @@ import {
 import type { TailoredStatus } from "@/lib/resume";
 import { ApplicationPanel } from "./application-panel";
 import { ExportButton } from "@/components/dashboard/export-button";
-import { actionSecondary, actionDisabled } from "@/components/dashboard/ui";
+import { actionSecondary, actionDisabled } from "@/components/ui/styles";
 
 export type ApplicationView = {
   id: string;

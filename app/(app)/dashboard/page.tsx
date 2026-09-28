@@ -17,7 +17,7 @@ import { NewResumeButton } from "@/components/dashboard/new-resume-button";
 import { BaseResumeCard } from "@/components/dashboard/base-resume-card";
 import { TailoredJobs } from "@/components/dashboard/tailored-jobs";
 import type { TailoredJob } from "@/components/dashboard/tailored-job-row";
-import { sectionLabel } from "@/components/dashboard/ui";
+import { sectionLabel } from "@/components/ui/styles";
 
 /**
  * Authenticated home — the workspace. One band for the user's BASE RESUME(s) (edited

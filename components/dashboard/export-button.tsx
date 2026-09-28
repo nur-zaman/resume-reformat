@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { loadResumeForExport } from "@/lib/resume/actions";
 import { formatDateForFilename, resumeFileName } from "@/lib/render/filename";
-import { actionPrimary } from "./ui";
+import { actionPrimary } from "@/components/ui/styles";
 
 /**
  * One-click PDF export for a Ready tailored job. The doc is fetched on demand and the react-pdf

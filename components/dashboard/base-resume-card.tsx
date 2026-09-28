@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { actionSecondary } from "./ui";
+import { actionSecondary } from "@/components/ui/styles";
 import { ResumeActionsMenu } from "./resume-actions-menu";
 
 /**

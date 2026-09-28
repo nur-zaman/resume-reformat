@@ -3,7 +3,7 @@ import type { TailoredStatus } from "@/lib/resume";
 import { StatusBadge } from "./status-badge";
 import { ExportButton } from "./export-button";
 import { ResumeActionsMenu } from "./resume-actions-menu";
-import { actionSecondary, actionDisabled } from "./ui";
+import { actionSecondary, actionDisabled } from "@/components/ui/styles";
 
 export type TailoredJob = {
   id: string;

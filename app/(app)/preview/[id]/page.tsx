@@ -6,7 +6,7 @@ import { getResume } from "@/lib/resume/queries";
 import { LoadError } from "@/components/ui/load-error";
 import { ResumeDocument } from "@/components/preview/resume-document";
 import { PdfExport } from "@/components/preview/pdf/pdf-export";
-import { actionSecondary } from "@/components/dashboard/ui";
+import { actionSecondary } from "@/components/ui/styles";
 
 /**
  * Read-only preview of one resume — the canonical HTML sheet (same template as the editor's
