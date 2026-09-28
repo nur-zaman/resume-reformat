@@ -7,13 +7,16 @@
 Paste a job description, get a tailored draft, and approve every AI-written claim before
 exporting a clean PDF.
 
-[![CI](https://github.com/nur-zaman/resume-reformat/actions/workflows/ci.yml/badge.svg)](https://github.com/nur-zaman/resume-reformat/actions/workflows/ci.yml)
+
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white)
-![Gemini](https://img.shields.io/badge/AI-Gemini-8E75B2?logo=googlegemini&logoColor=white)
 
-<img src="docs/screenshots/landing.jpg" alt="Resume Reformatter landing page" width="100%" />
+<video src="docs/promo.mp4" poster="docs/screenshots/landing.jpg" controls muted playsinline width="100%">
+  <a href="docs/promo.mp4"><img src="docs/screenshots/landing.jpg" alt="Watch the 44-second product video" width="100%" /></a>
+</video>
+
+<!-- <img src="docs/screenshots/landing.jpg" alt="Resume Reformatter landing page" width="100%" /> -->
 
 </div>
 
