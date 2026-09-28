@@ -67,3 +67,14 @@ export async function requireAllowlistedUser(): Promise<{
   }
   return { user, supabase: await createClient() };
 }
+
+export async function authorize(): Promise<Awaited<
+  ReturnType<typeof requireAllowlistedUser>
+> | null> {
+  try {
+    return await requireAllowlistedUser();
+  } catch (err) {
+    if (err instanceof AuthorizationError) return null;
+    throw err;
+  }
+}

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAllowlistedUser, AuthorizationError } from "@/lib/auth/guards";
+import { authorize } from "@/lib/auth/guards";
 import { parseResume } from "@/lib/ai/parse-resume";
 import type { AiErrorCategory } from "@/lib/ai/errors";
 import { logAiEvent } from "@/lib/ai/log";
@@ -61,12 +61,7 @@ export async function parseResumeAction(
   formData: FormData,
 ): Promise<ParseResumeState> {
   // 1. Authorize before reading input or incurring any AI cost.
-  try {
-    await requireAllowlistedUser();
-  } catch (err) {
-    if (err instanceof AuthorizationError) return parseError("auth");
-    throw err;
-  }
+  if (!(await authorize())) return parseError("auth");
 
   // 2. Deterministic input guard — rejected BEFORE any AI call and never retried. A PDF
   //    upload takes precedence over the textarea when both are present.
@@ -159,13 +154,9 @@ export async function createResume(input: {
   /** "draft" parks an unfinished tailoring; "finalize" (default) marks a resolved one ready. */
   intent?: "finalize" | "draft";
 }): Promise<CreateResumeResult> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   const validated = validateResumeDoc(input.doc);
   if (!validated.ok) {
@@ -245,15 +236,9 @@ export async function saveResume(
   doc: unknown,
   reviewItems?: ReviewItem[],
 ): Promise<SaveResumeState> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) {
-      return { ok: false, category: "auth", message: AUTH_MESSAGE };
-    }
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, category: "auth", message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   const invalid = (): SaveResumeState => ({
     ok: false,
@@ -321,13 +306,9 @@ export async function renameResume(
   id: string,
   rawTitle: string,
 ): Promise<MutateResumeResult> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   const title = sanitizeTitle(rawTitle);
   if (title === "") return { ok: false, message: "Enter a name for this resume." };
@@ -350,13 +331,9 @@ export async function renameResume(
 
 /** Copy an existing resume into a new row titled "<title> (copy)". */
 export async function duplicateResume(id: string): Promise<CreateResumeResult> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   try {
     const { data: src, error: readError } = await supabase
@@ -399,13 +376,9 @@ export type ExportDocResult =
  * when the user actually clicks Export — rather than shipped with every row.
  */
 export async function loadResumeForExport(id: string): Promise<ExportDocResult> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   try {
     const { data, error } = await supabase
@@ -428,13 +401,9 @@ export async function loadResumeForExport(id: string): Promise<ExportDocResult> 
 
 /** Permanently delete a resume the user owns. */
 export async function deleteResume(id: string): Promise<MutateResumeResult> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   try {
     const { error } = await supabase
@@ -505,13 +474,9 @@ export async function updateApplication(
   id: string,
   patch: ApplicationPatch,
 ): Promise<MutateResumeResult> {
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return { ok: false, message: AUTH_MESSAGE };
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return { ok: false, message: AUTH_MESSAGE };
+  const { user, supabase } = auth;
 
   // Reject an unknown stage before any read (the TS type is not a runtime guarantee).
   if (patch.stage !== undefined && !APPLICATION_STAGES.includes(patch.stage)) {

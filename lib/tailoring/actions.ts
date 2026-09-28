@@ -1,7 +1,7 @@
 "use server";
 
 import { clientIp } from "@/lib/http/client-ip";
-import { requireAllowlistedUser, AuthorizationError } from "@/lib/auth/guards";
+import { authorize } from "@/lib/auth/guards";
 import { tailorResume } from "@/lib/ai/tailor-resume";
 import type { AiErrorCategory } from "@/lib/ai/errors";
 import { logAiEvent } from "@/lib/ai/log";
@@ -47,13 +47,9 @@ export async function tailorResumeAction(
   formData: FormData,
 ): Promise<TailorState> {
   // 1. Authorize before reading input or incurring any AI cost.
-  let user, supabase;
-  try {
-    ({ user, supabase } = await requireAllowlistedUser());
-  } catch (err) {
-    if (err instanceof AuthorizationError) return tailorError("auth");
-    throw err;
-  }
+  const auth = await authorize();
+  if (!auth) return tailorError("auth");
+  const { user, supabase } = auth;
 
   // 2. Identify the base resume and read optional job metadata.
   const resumeId = String(formData.get("resumeId") ?? "");
