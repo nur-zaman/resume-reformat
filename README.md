@@ -12,9 +12,7 @@ exporting a clean PDF.
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white)
 
-<video src="docs/promo.mp4" poster="docs/screenshots/landing.jpg" controls muted playsinline width="100%">
-  <a href="docs/promo.mp4"><img src="docs/screenshots/landing.jpg" alt="Watch the 44-second product video" width="100%" /></a>
-</video>
+https://github.com/user-attachments/assets/ea5712bb-cbaf-4638-8cda-d1376605f94f
 
 <!-- <img src="docs/screenshots/landing.jpg" alt="Resume Reformatter landing page" width="100%" /> -->
 
