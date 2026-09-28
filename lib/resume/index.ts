@@ -1,7 +1,3 @@
-/**
- * Public API for the canonical resume model. Import from `@/lib/resume`.
- * Fixtures live under `@/lib/resume/fixtures` and are imported directly.
- */
 export * from "./version";
 export * from "./ids";
 export * from "./richtext";

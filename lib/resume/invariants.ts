@@ -3,21 +3,8 @@ import { findDuplicates } from "./ids";
 import { collectContentIdsFromRichText } from "./richtext";
 import type { ResumeDoc, ReviewItem } from "./schema";
 
-/**
- * Pure cross-document invariants (PRD §7.1, §7.2).
- *
- * These functions are the single source of truth for invariants that span the whole
- * document — they are wired into the schema's `.superRefine` (so one `safeParse` is the
- * trusted gate) and reused directly by the editor for live, non-blocking feedback.
- */
-
 export type Issue = { path: (string | number)[]; message: string };
 
-// ---------------------------------------------------------------------------
-// Traversal
-// ---------------------------------------------------------------------------
-
-/** Every stable id in the document: blocks and their nested entries/items. */
 export function collectAllIds(doc: ResumeDoc): string[] {
   const ids: string[] = [];
   for (const block of doc.blocks) {
@@ -44,7 +31,6 @@ export function collectAllIds(doc: ResumeDoc): string[] {
   return ids;
 }
 
-/** Every rich-text content id in the document (the ReviewItem.targetContentId anchors). */
 export function collectContentIds(doc: ResumeDoc): string[] {
   const ids: string[] = [];
   for (const block of doc.blocks) {
@@ -71,11 +57,6 @@ export function collectContentIds(doc: ResumeDoc): string[] {
   return ids;
 }
 
-// ---------------------------------------------------------------------------
-// Invariant checks (return Issue[])
-// ---------------------------------------------------------------------------
-
-/** Exactly one header block, and it is first (PRD §7.1). */
 export function exactlyOneHeaderFirst(doc: ResumeDoc): Issue[] {
   const issues: Issue[] = [];
   const headerCount = doc.blocks.filter((b) => b.type === "header").length;
@@ -94,7 +75,6 @@ export function exactlyOneHeaderFirst(doc: ResumeDoc): Issue[] {
   return issues;
 }
 
-/** All ids and all content ids are unique across the document. */
 export function uniqueIds(doc: ResumeDoc): Issue[] {
   const issues: Issue[] = [];
   for (const dup of findDuplicates(collectAllIds(doc))) {
@@ -106,7 +86,6 @@ export function uniqueIds(doc: ResumeDoc): Issue[] {
   return issues;
 }
 
-/** Every pending review item points at a content id that still exists (PRD §7.2). */
 export function noOrphanedPendingReviewItems(
   resume: ResumeDoc,
   reviewItems: ReviewItem[],
@@ -124,7 +103,6 @@ export function noOrphanedPendingReviewItems(
   return issues;
 }
 
-/** `resolvedAt` is present iff the item is resolved (accepted or dismissed). */
 export function reviewItemStatusCoherent(reviewItems: ReviewItem[]): Issue[] {
   const issues: Issue[] = [];
   reviewItems.forEach((item, i) => {
@@ -145,7 +123,6 @@ export function reviewItemStatusCoherent(reviewItems: ReviewItem[]): Issue[] {
   return issues;
 }
 
-/** All review-state invariants (orphans + coherence) — reused by the editor. */
 export function validateReviewState(
   resume: ResumeDoc,
   reviewItems: ReviewItem[],
@@ -155,10 +132,6 @@ export function validateReviewState(
     ...reviewItemStatusCoherent(reviewItems),
   ];
 }
-
-// ---------------------------------------------------------------------------
-// superRefine adapters — report Issue[] through Zod's refinement context.
-// ---------------------------------------------------------------------------
 
 function report(ctx: z.RefinementCtx, issues: Issue[]): void {
   for (const issue of issues) {

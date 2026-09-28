@@ -1,38 +1,15 @@
 import { z } from "zod";
 import { UuidSchema } from "./ids";
 
-/**
- * Constrained ATS-safe rich-text schema (PRD §4, §7.1).
- *
- * The canonical rich text is ProseMirror/Tiptap JSON narrowed to a closed subset:
- * paragraphs, bullet/ordered lists, hard breaks, and the bold / italic / link marks.
- * Anything outside this subset — headings, tables, images, code blocks, colors,
- * underline, strike, custom attrs — FAILS validation rather than being silently
- * dropped. The editor's Tiptap instance is configured to emit exactly this shape, so
- * the schema and the editor are two ends of one contract.
- *
- * The node hierarchy is acyclic (doc → block → listItem → paragraph → inline), so it
- * is defined bottom-up without z.lazy. Nested lists are intentionally not allowed:
- * a listItem may only contain paragraphs.
- */
-
-// ---------------------------------------------------------------------------
-// URL scheme validation — shared by the link mark and the header `links` schema.
-// ---------------------------------------------------------------------------
-
 const ALLOWED_URL_PROTOCOLS = new Set(["https:", "http:", "mailto:", "tel:"]);
 
-/**
- * True only for absolute URLs with an explicit, safe scheme. Rejects `javascript:`,
- * `data:`, relative, and scheme-less values. Web URLs require a host; mailto/tel
- * require a plausible address/number after the scheme.
- */
+// Explicit allowlist: rejects javascript:/data: and other unsafe or scheme-less values.
 export function isAllowedUrl(value: string): boolean {
   let url: URL;
   try {
     url = new URL(value);
   } catch {
-    return false; // relative or malformed
+    return false;
   }
   if (!ALLOWED_URL_PROTOCOLS.has(url.protocol)) return false;
 
@@ -41,7 +18,6 @@ export function isAllowedUrl(value: string): boolean {
     case "https:":
       return url.hostname.length > 0;
     case "mailto:": {
-      // Everything after `mailto:` up to any `?` query is the address list.
       const address = decodeURIComponent(url.pathname.split("?")[0]);
       return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address);
     }
@@ -58,10 +34,6 @@ const HttpsUrl = z.string().refine(isAllowedUrl, {
   message: "URL must use an https:, http:, mailto:, or tel: scheme",
 });
 
-// ---------------------------------------------------------------------------
-// Marks
-// ---------------------------------------------------------------------------
-
 const BoldMarkSchema = z.strictObject({ type: z.literal("bold") });
 const ItalicMarkSchema = z.strictObject({ type: z.literal("italic") });
 const LinkMarkSchema = z.strictObject({
@@ -75,10 +47,6 @@ export const MarkSchema = z.discriminatedUnion("type", [
   LinkMarkSchema,
 ]);
 
-// ---------------------------------------------------------------------------
-// Inline nodes
-// ---------------------------------------------------------------------------
-
 const TextNodeSchema = z.strictObject({
   type: z.literal("text"),
   text: z.string().min(1),
@@ -91,12 +59,6 @@ const InlineNodeSchema = z.discriminatedUnion("type", [
   TextNodeSchema,
   HardBreakNodeSchema,
 ]);
-
-// ---------------------------------------------------------------------------
-// Block nodes. Top-level blocks (direct children of `doc`) may carry a stable
-// `contentId` so a ReviewItem can target them; it is minted on demand only for
-// proposal-bearing nodes, never `null`.
-// ---------------------------------------------------------------------------
 
 const ParagraphNodeSchema = z.strictObject({
   type: z.literal("paragraph"),
@@ -132,7 +94,6 @@ const BlockNodeSchema = z.discriminatedUnion("type", [
   OrderedListNodeSchema,
 ]);
 
-/** A complete rich-text body. Empty body is `{ type: "doc", content: [] }`. */
 export const RichTextSchema = z.strictObject({
   type: z.literal("doc"),
   content: z.array(BlockNodeSchema),
@@ -143,10 +104,6 @@ export type InlineNode = z.infer<typeof InlineNodeSchema>;
 export type BlockNode = z.infer<typeof BlockNodeSchema>;
 export type RichText = z.infer<typeof RichTextSchema>;
 
-/**
- * Collect the `contentId`s carried by the top-level block nodes of a rich-text body.
- * These are the anchors a ReviewItem.targetContentId may point at.
- */
 export function collectContentIdsFromRichText(body: RichText): string[] {
   const ids: string[] = [];
   for (const node of body.content) {

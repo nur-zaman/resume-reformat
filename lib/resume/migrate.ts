@@ -1,15 +1,6 @@
 import { CURRENT_SCHEMA_VERSION } from "./version";
 import { ResumeDocSchema, type ResumeDoc } from "./schema";
 
-/**
- * Schema version migration runner.
- *
- * Reads a stored document's `schemaVersion` and walks it up to the current version,
- * then hard-validates the result. The runner is structured for future v1→v2→… steps
- * even though only v1 exists today (MIGRATIONS is empty). Because it always finishes
- * with `ResumeDocSchema.parse`, a buggy migration step can never emit an invalid doc.
- */
-
 export class CorruptDocumentError extends Error {
   constructor(message: string) {
     super(message);
@@ -34,7 +25,7 @@ export class MissingMigrationError extends Error {
 type ResumeRecord = Record<string, unknown>;
 type Migration = { from: number; to: number; up: (doc: ResumeRecord) => ResumeRecord };
 
-/** Append `{ from, to, up }` steps here when CURRENT_SCHEMA_VERSION is bumped. */
+// Append { from, to, up } steps here when CURRENT_SCHEMA_VERSION is bumped.
 const MIGRATIONS: Migration[] = [];
 
 function readSchemaVersion(input: unknown): number {

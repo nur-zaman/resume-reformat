@@ -14,14 +14,6 @@ import {
 import type { EditorAction, MoveDirection, RichTextTarget } from "./actions";
 import type { EditorState } from "./state";
 
-/**
- * The pure editor reducer. It is the real guard for the schema invariants the editor
- * must uphold (disabled buttons are only affordances): the header stays a singleton at
- * index 0, reorders are clamped, new content comes from the schema factories, and
- * removing content that backs a pending review item dismisses that item in the SAME
- * transition (PRD §7.2) so no orphaned pending item can survive.
- */
-
 type HeaderBlock = Extract<Block, { type: "header" }>;
 
 const PATCHABLE_ENTRY_FIELDS = new Set([
@@ -34,7 +26,7 @@ const PATCHABLE_ENTRY_FIELDS = new Set([
   "endDate",
 ]);
 
-/** Apply a string-field patch, ignoring any non-allowlisted key (e.g. id, rich text). */
+// Ignores any non-allowlisted key so a patch can never overwrite id or rich-text fields.
 function applyEntryPatch<T extends object>(entry: T, patch: Record<string, string>): T {
   const next = { ...entry } as Record<string, unknown>;
   for (const [key, value] of Object.entries(patch)) {
@@ -44,10 +36,6 @@ function applyEntryPatch<T extends object>(entry: T, patch: Record<string, strin
   }
   return next as T;
 }
-
-// ---------------------------------------------------------------------------
-// Immutable helpers
-// ---------------------------------------------------------------------------
 
 function moveInList<T>(list: T[], from: number, to: number): T[] {
   if (from < 0 || from >= list.length || to < 0 || to >= list.length || from === to) {
@@ -96,7 +84,6 @@ function setRichTextBody(doc: ResumeDoc, target: RichTextTarget, body: RichText)
   });
 }
 
-/** Drop every top-level rich-text node carrying `contentId`, wherever it lives. */
 function removeContentNode(doc: ResumeDoc, contentId: string): ResumeDoc {
   const prune = (body: RichText): RichText => ({
     ...body,
@@ -120,7 +107,6 @@ function removeContentNode(doc: ResumeDoc, contentId: string): ResumeDoc {
   };
 }
 
-/** Dismiss pending review items whose target content no longer exists (PRD §7.2). */
 function reconcileReviewItems(
   doc: ResumeDoc,
   reviewItems: ReviewItem[],
@@ -142,15 +128,10 @@ function moveBlock(doc: ResumeDoc, blockId: string, direction: MoveDirection): R
   const index = doc.blocks.findIndex((b) => b.id === blockId);
   if (index < 0) return doc;
   if (doc.blocks[index].type === "header") return doc; // header is pinned first
-  // Non-header blocks live at indexes >= 1; never let one occupy index 0.
-  const to = direction === "up" ? index - 1 : index + 1;
+  const to = direction === "up" ? index - 1 : index + 1; // never let a block occupy index 0
   if (to < 1 || to > doc.blocks.length - 1) return doc;
   return { ...doc, blocks: moveInList(doc.blocks, index, to) };
 }
-
-// ---------------------------------------------------------------------------
-// Reducer
-// ---------------------------------------------------------------------------
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
@@ -446,7 +427,6 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         };
       }
 
-      // dismiss = remove the proposed content and mark the item dismissed.
       const doc = removeContentNode(state.doc, item.targetContentId);
       const dismissed = state.reviewItems.map((r) =>
         r.id === action.reviewItemId

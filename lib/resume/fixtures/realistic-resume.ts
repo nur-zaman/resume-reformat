@@ -3,15 +3,8 @@ import { CURRENT_SCHEMA_VERSION } from "../version";
 import type { RichText } from "../richtext";
 import type { ResumeDoc } from "../schema";
 
-/**
- * A realistic single-column resume that mirrors the reference layout in image.png.
- * Doubles as the base fixture for the M3 visual-regression suite. Built with minted
- * ids so it always reflects the live schema; it validates against ResumeDocSchema.
- *
- * One summary paragraph carries `proposedContentId` so a sample pending ReviewItem
- * (see generation-result.ts) can target real content and exercise the review flow.
- */
-
+// proposedContentId marks the summary paragraph a sample pending ReviewItem targets
+// (see generation-result.ts).
 export const proposedContentId = newId();
 
 function para(text: string, contentId?: string): RichText["content"][number] {

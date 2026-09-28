@@ -234,7 +234,7 @@ describe("blockCapabilities", () => {
     expect(blockCapabilities(state.doc.blocks[1], 1, total)).toMatchObject({
       canDelete: true,
       canHide: true,
-      canMoveUp: false, // index 1 cannot move into the header slot
+      canMoveUp: false,
       canMoveDown: true,
     });
     expect(blockCapabilities(state.doc.blocks[total - 1], total - 1, total).canMoveDown).toBe(false);

@@ -13,14 +13,6 @@ import type {
   SkillCategory,
 } from "./schema";
 
-/**
- * Constructors that mint fresh stable ids. These are the only place (besides ids.ts)
- * that creates ids, so "what a valid new block/entry looks like" lives with the schema
- * rather than the editor. Every constructor returns a structurally valid value: empty
- * blocks and entries are legal (free-text fields may be ""), so the editor never opens
- * in an invalid state.
- */
-
 export function emptyRichText(): RichText {
   return { type: "doc", content: [] };
 }
@@ -97,7 +89,6 @@ export function createContactItem(kind: ContactItem["kind"]): ContactItem {
   return { id: newId(), kind, value: "", label: "" };
 }
 
-/** Links are created with a real, scheme-validated href (the add-link flow commits both). */
 export function createLink(init: { label: string; href: string }): Link {
   return { id: newId(), label: init.label, href: init.href };
 }

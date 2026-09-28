@@ -46,7 +46,6 @@ describe("normalizeRichTextJson", () => {
       ],
     };
     const normalized = normalizeRichTextJson(input);
-    // The normalized output must satisfy the strict canonical schema.
     expect(RichTextSchema.safeParse(normalized).success).toBe(true);
   });
 });

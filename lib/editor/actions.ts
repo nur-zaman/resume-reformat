@@ -7,13 +7,9 @@ import type {
 } from "@/lib/resume";
 import type { ValidationState } from "./state";
 
-/**
- * Editor actions. Actions that can orphan a pending review item by removing content
- * (block/entry delete, rich-text replacement, proposal dismissal) carry `now` (an ISO
- * timestamp the UI supplies) so the reducer can stamp `resolvedAt` on cascaded
- * dismissals while staying pure and deterministic.
- */
-
+// Actions that can orphan a pending review item by removing content carry `now` (an ISO
+// timestamp from the UI) so the reducer can stamp `resolvedAt` on cascaded dismissals
+// while staying pure.
 export type MoveDirection = "up" | "down";
 
 export type RichTextTarget =
@@ -23,16 +19,13 @@ export type RichTextTarget =
   | { kind: "educationDetails"; blockId: string; entryId: string };
 
 export type EditorAction =
-  // selection + validation
   | { type: "select"; blockId: string | null }
   | { type: "validation/result"; validation: ValidationState }
-  // blocks
   | { type: "block/add"; blockType: Exclude<BlockType, "header"> }
   | { type: "block/delete"; blockId: string; now: string }
   | { type: "block/move"; blockId: string; direction: MoveDirection }
   | { type: "block/rename"; blockId: string; title: string }
   | { type: "block/toggleVisible"; blockId: string }
-  // header
   | { type: "header/setField"; field: "name" | "headline"; value: string }
   | { type: "header/contact/add"; kind: ContactItem["kind"] }
   | {
@@ -50,7 +43,6 @@ export type EditorAction =
     }
   | { type: "header/link/remove"; linkId: string }
   | { type: "header/link/move"; linkId: string; direction: MoveDirection }
-  // skills
   | { type: "skills/category/add"; blockId: string }
   | {
       type: "skills/category/update";
@@ -66,7 +58,6 @@ export type EditorAction =
       direction: MoveDirection;
     }
   | { type: "skills/items/set"; blockId: string; categoryId: string; items: string[] }
-  // experience / education entries
   | { type: "entry/add"; blockId: string }
   | {
       type: "entry/update";
@@ -76,9 +67,7 @@ export type EditorAction =
     }
   | { type: "entry/remove"; blockId: string; entryId: string; now: string }
   | { type: "entry/move"; blockId: string; entryId: string; direction: MoveDirection }
-  // rich text
   | { type: "richtext/set"; target: RichTextTarget; body: RichText; now: string }
-  // review queue
   | {
       type: "review/resolve";
       reviewItemId: string;

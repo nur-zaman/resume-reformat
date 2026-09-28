@@ -3,14 +3,8 @@ import { CURRENT_SCHEMA_VERSION } from "../version";
 import type { RichText } from "../richtext";
 import type { ResumeDoc } from "../schema";
 
-/**
- * A long, multi-page resume fixture for the M3 page-break work (PRD FR-29). It has many
- * experience entries with several bullets each so the document spans more than one US
- * Letter page, exercising "keep each entry together; break between entries" pagination.
- * Built with minted ids so it always reflects the live schema and validates against
- * ResumeDocSchema.
- */
-
+// Deliberately spans multiple US Letter pages to exercise pagination (keep each entry
+// together; break between entries).
 function para(text: string): RichText["content"][number] {
   return { type: "paragraph", content: [{ type: "text", text }] };
 }

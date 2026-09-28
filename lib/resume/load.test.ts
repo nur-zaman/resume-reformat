@@ -19,9 +19,8 @@ describe("resolveStoredResume", () => {
 
   it("reports an error for a corrupt or unreadable stored value (never overwrites it)", () => {
     expect(resolveStoredResume("not a doc").kind).toBe("error");
-    expect(resolveStoredResume({ blocks: [] }).kind).toBe("error"); // no schemaVersion
+    expect(resolveStoredResume({ blocks: [] }).kind).toBe("error");
     expect(resolveStoredResume({ schemaVersion: 1, blocks: "nope" }).kind).toBe("error");
-    // A doc with no header violates a schema invariant.
     expect(resolveStoredResume({ schemaVersion: 1, blocks: [] }).kind).toBe("error");
   });
 });

@@ -8,19 +8,6 @@ import { deriveResumeTitle } from "./title";
 import { tailoredStatusFor, type ResumeKind } from "./status";
 import type { ResumeDoc, ReviewItem } from "./schema";
 
-/**
- * Server actions for resume parsing and the resume CRUD that backs the dashboard. Every
- * action gates on `requireAllowlistedUser` (the real authorization boundary — middleware is
- * UX only) and never persists invalid data. Parsing returns a DRAFT for client-side review;
- * nothing is written until the user explicitly saves (PRD §6.1, FR-7). Resume rows live in
- * `public.resumes` (one per row, many per user) and are always scoped by `id` + `user_id`
- * in addition to RLS.
- */
-
-// ---------------------------------------------------------------------------
-// Resume CRUD (public.resumes — one row per resume, many per user)
-// ---------------------------------------------------------------------------
-
 export type CreateResumeResult =
   | { ok: true; id: string }
   | { ok: false; message: string };
@@ -37,24 +24,15 @@ function sanitizeTitle(raw: string): string {
   return raw.trim().slice(0, TITLE_MAX);
 }
 
-/**
- * Create a new resume row. Used by onboarding and "Start blank" (a `base` resume) and by the
- * tailoring flow (a `tailored` resume carrying its job metadata + reviewed proposals). The doc
- * is validated before any write, so an invalid document is never persisted; for tailored
- * resumes the resume + its review items are validated together so orphaned proposals can't be
- * stored either. Title falls back to the header name, then a default.
- */
 export async function createResume(input: {
   doc: unknown;
   title?: string;
-  /** Defaults to "base"; "tailored" persists the job metadata + review items below. */
   kind?: ResumeKind;
   company?: string;
   targetRole?: string;
-  /** The base resume this was tailored from (FK; SET NULL if that base is later deleted). */
+  // FK; SET NULL if that base resume is later deleted.
   sourceResumeId?: string;
   reviewItems?: ReviewItem[];
-  /** "draft" parks an unfinished tailoring; "finalize" (default) marks a resolved one ready. */
   intent?: "finalize" | "draft";
 }): Promise<CreateResumeResult> {
   const auth = await authorize();
@@ -68,8 +46,6 @@ export async function createResume(input: {
 
   const title = sanitizeTitle(input.title ?? "") || deriveResumeTitle(validated.data);
 
-  // Base resume: unchanged insert — column defaults (kind='base', status='ready',
-  // review_items='[]') keep onboarding and "Start blank" byte-identical to before.
   if (input.kind !== "tailored") {
     try {
       const { data, error } = await supabase
@@ -87,8 +63,6 @@ export async function createResume(input: {
     }
   }
 
-  // Tailored resume: validate the doc + review items together (no orphaned proposals), then
-  // derive the lifecycle status from what's still pending.
   const working = validateWorkingDoc({
     resume: validated.data,
     reviewItems: input.reviewItems ?? [],
@@ -124,16 +98,7 @@ export async function createResume(input: {
   }
 }
 
-/**
- * Persist edits to an existing resume and bump its version (explicit save — autosave +
- * multi-tab compare-and-swap are M6). Scoped by `id` + `user_id`; a 0-row update is treated
- * as a failure so a good resume is never silently overwritten (FR-8 spirit).
- *
- * When `reviewItems` is supplied (the editor always supplies the working set), the resume and
- * its proposals are validated together and — for a `tailored` row — the persisted review items
- * and derived status are updated too, so resolving the last proposal flips it to `ready`. Base
- * rows ignore review items entirely, leaving their save path unchanged.
- */
+// A 0-row update is treated as a failure so a good resume is never silently overwritten.
 export async function saveResume(
   id: string,
   doc: unknown,
@@ -149,8 +114,6 @@ export async function saveResume(
     message: "This resume isn't valid and was not saved.",
   });
 
-  // Validate the doc — together with its review items when provided, so a save can never
-  // persist proposals orphaned by an edit that deleted their target content.
   let resume: ResumeDoc;
   let items: ReviewItem[] | null = null;
   if (reviewItems) {
@@ -204,7 +167,6 @@ export async function saveResume(
   }
 }
 
-/** Rename a resume. Empty titles are rejected; nothing is written when invalid. */
 export async function renameResume(
   id: string,
   rawTitle: string,
@@ -232,7 +194,6 @@ export async function renameResume(
   }
 }
 
-/** Copy an existing resume into a new row titled "<title> (copy)". */
 export async function duplicateResume(id: string): Promise<CreateResumeResult> {
   const auth = await authorize();
   if (!auth) return { ok: false, message: SESSION_EXPIRED_MESSAGE };
@@ -247,7 +208,6 @@ export async function duplicateResume(id: string): Promise<CreateResumeResult> {
       .single();
     if (readError || !src) return { ok: false, message: "We couldn't find that resume." };
 
-    // Defensive: never copy a doc that no longer validates.
     const validated = validateResumeDoc(src.doc);
     if (!validated.ok) {
       return { ok: false, message: "That resume can't be duplicated because it's invalid." };
@@ -273,11 +233,6 @@ export type ExportDocResult =
   | { ok: true; doc: ResumeDoc }
   | { ok: false; message: string };
 
-/**
- * Fetch a resume's validated doc for client-side PDF export from the dashboard. Kept separate
- * from the dashboard list query so the (potentially large) doc is fetched on demand — only
- * when the user actually clicks Export — rather than shipped with every row.
- */
 export async function loadResumeForExport(id: string): Promise<ExportDocResult> {
   const auth = await authorize();
   if (!auth) return { ok: false, message: SESSION_EXPIRED_MESSAGE };
@@ -302,7 +257,6 @@ export async function loadResumeForExport(id: string): Promise<ExportDocResult> 
   }
 }
 
-/** Permanently delete a resume the user owns. */
 export async function deleteResume(id: string): Promise<MutateResumeResult> {
   const auth = await authorize();
   if (!auth) return { ok: false, message: SESSION_EXPIRED_MESSAGE };

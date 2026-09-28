@@ -7,39 +7,18 @@ import {
   reviewStateCrossChecks,
 } from "./invariants";
 
-/**
- * The canonical resume document and its companion contracts (PRD §7).
- *
- * Shared boundary schemas for the editor, AI endpoints, and persistence. Every object
- * is a `z.strictObject`, so unknown keys are rejected and never silently persisted.
- *
- * null / empty discipline (PRD §7.1): `visible` is always a present boolean on
- * non-header blocks; optional text fields are required strings that may be ""; optional
- * arrays are required and may be []. The ONLY `.optional()` data field is
- * `ReviewItem.resolvedAt`. `.nullable()` is used nowhere — `null` is never a valid value.
- */
-
-// ---------------------------------------------------------------------------
-// Shared leaves
-// ---------------------------------------------------------------------------
+// Null/empty discipline: text fields are required strings that may be ""; arrays are
+// required and may be []. `ReviewItem.resolvedAt` is the only optional field, and
+// `.nullable()` is never used — `null` is never a valid value.
 
 const NonEmptyString = z.string().min(1);
 
-/** A display date such as "2023", "May 2023", or "Present"; may be "". */
 const DisplayDate = z.string();
 
 const UrlString = z.string().refine(isAllowedUrl, {
   message: "URL must use an https:, http:, mailto:, or tel: scheme",
 });
 
-// ---------------------------------------------------------------------------
-// Header
-// ---------------------------------------------------------------------------
-
-/**
- * A typed contact detail. `kind` drives rendering (email → mailto:, phone → tel:);
- * `label` names a `custom` item and is "" otherwise. Profile/web URLs live in `links`.
- */
 export const ContactItemSchema = z
   .strictObject({
     id: UuidSchema,
@@ -48,8 +27,7 @@ export const ContactItemSchema = z
     label: z.string(),
   })
   .superRefine((item, ctx) => {
-    // Validate the address shape only once the user has entered something, so a
-    // freshly-added blank contact item is not reported as an error.
+    // Only validated once a value is entered, so a freshly-added blank item isn't an error.
     if (
       item.kind === "email" &&
       item.value !== "" &&
@@ -78,11 +56,8 @@ const HeaderBlockSchema = z.strictObject({
   links: z.array(LinkSchema),
 });
 
-// ---------------------------------------------------------------------------
-// Content blocks. All carry `title` + `visible`; the header has neither a `title`
-// nor a `visible` field — its absence structurally forbids hiding or renaming it.
-// ---------------------------------------------------------------------------
-
+// The header has neither `title` nor `visible` — its absence structurally forbids
+// hiding or renaming it, unlike every other block type.
 const SummaryBlockSchema = z.strictObject({
   id: UuidSchema,
   type: z.literal("summary"),
@@ -158,20 +133,12 @@ export const BlockSchema = z.discriminatedUnion("type", [
   RichTextBlockSchema,
 ]);
 
-// ---------------------------------------------------------------------------
-// ResumeDoc
-// ---------------------------------------------------------------------------
-
 export const ResumeDocSchema = z
   .strictObject({
     schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
     blocks: z.array(BlockSchema),
   })
   .superRefine(resumeDocCrossChecks);
-
-// ---------------------------------------------------------------------------
-// Review items + AI response envelope
-// ---------------------------------------------------------------------------
 
 export const ReviewItemSchema = z.strictObject({
   id: UuidSchema,
@@ -183,11 +150,6 @@ export const ReviewItemSchema = z.strictObject({
   resolvedAt: z.iso.datetime().optional(),
 });
 
-/**
- * A resume plus its review items — the editor's working state and the persisted
- * working copy. Cross-checks ensure no pending review item is orphaned and that
- * status / resolvedAt stay coherent.
- */
 export const WorkingDocSchema = z
   .strictObject({
     resume: ResumeDocSchema,
@@ -210,10 +172,6 @@ export const GenerationResultSchema = z
   .superRefine((value, ctx) =>
     reviewStateCrossChecks(value.resume, value.reviewItems, ctx),
   );
-
-// ---------------------------------------------------------------------------
-// Inferred types
-// ---------------------------------------------------------------------------
 
 export type ContactItem = z.infer<typeof ContactItemSchema>;
 export type Link = z.infer<typeof LinkSchema>;

@@ -6,22 +6,16 @@ import {
 } from "@/lib/resume";
 import type { EditorState } from "./state";
 
-/** Pure derived reads over editor state. */
-
 export function pendingReviewItems(state: EditorState): ReviewItem[] {
   return state.reviewItems.filter((r) => r.status === "pending");
 }
 
-/**
- * Whether a PDF may be exported (PRD FR-28): blocked while any review item is pending or
- * orphaned. An orphaned review item — one targeting deleted content — is always still
- * pending, so it is a subset of the pending set; checking for pending items covers both.
- */
+// An orphaned review item is always still "pending", so checking pending items alone
+// also covers orphans.
 export function canExport(state: EditorState): boolean {
   return pendingReviewItems(state).length === 0;
 }
 
-/** The pending review item targeting a content node, if any (for decorations). */
 export function reviewItemForContentId(
   reviewItems: ReviewItem[],
   contentId: string,
@@ -37,11 +31,6 @@ export type BlockCapabilities = {
   canMoveDown: boolean;
 };
 
-/**
- * What the controls for a block may do. The header is pinned: it cannot be renamed,
- * hidden, deleted, or moved. Non-header blocks never move above index 1 (index 0 is
- * the header), so the first content block cannot move up and the last cannot move down.
- */
 export function blockCapabilities(
   block: Block,
   index: number,
@@ -69,7 +58,6 @@ export function findBlock(doc: ResumeDoc, blockId: string): Block | undefined {
   return doc.blocks.find((b) => b.id === blockId);
 }
 
-/** The content ids carried by a single block's rich-text bodies. */
 export function blockContentIds(block: Block): string[] {
   switch (block.type) {
     case "summary":
@@ -84,7 +72,6 @@ export function blockContentIds(block: Block): string[] {
   }
 }
 
-/** Which block holds the rich-text node carrying `contentId` (for review jump-to). */
 export function blockIdForContentId(doc: ResumeDoc, contentId: string): string | null {
   for (const block of doc.blocks) {
     if (blockContentIds(block).includes(contentId)) return block.id;

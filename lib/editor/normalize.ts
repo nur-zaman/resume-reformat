@@ -1,9 +1,5 @@
-/**
- * Normalize ProseMirror JSON emitted by the editor into the canonical shape the
- * schema accepts. Tiptap declares a global `contentId` attribute (so the id survives
- * editing), which means every node serializes `attrs: { contentId: null }`. The schema
- * forbids null, so we strip null/undefined attr values and drop emptied `attrs` objects.
- */
+// Tiptap serializes every node with `attrs: { contentId: null }` (a global attribute),
+// but the schema forbids null — strip null/undefined attr values and drop emptied attrs.
 export function normalizeRichTextJson(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(normalizeRichTextJson);
