@@ -44,3 +44,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local planning / agent tooling (kept out of the repo)
+PRD*.md
+DESIGN.md
+/.agents/
+/.claude/
+skills-lock.json
+Screenshot*.png
