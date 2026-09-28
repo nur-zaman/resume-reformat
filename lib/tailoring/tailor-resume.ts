@@ -1,14 +1,14 @@
 import "server-only";
 import { generateObject } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { AiTailorSchema, type AiTailorOutput } from "@/lib/resume/tailor-schema";
+import { AiTailorSchema, type AiTailorOutput } from "./schema";
 import type { ResumeDoc } from "@/lib/resume/schema";
-import { getAiConfig } from "./config";
-import { tailorKnobs } from "./generation-config";
-import { classifyAiError, type AiErrorCategory } from "./errors";
-import { buildTailorSystemPrompt, buildTailorUserPrompt } from "./tailor-prompt";
-import { buildRetryFeedback } from "./retry-feedback";
-import { logAiEvent } from "./log";
+import { getAiConfig } from "@/lib/ai/config";
+import { tailorKnobs } from "@/lib/ai/generation-config";
+import { classifyAiError, type AiErrorCategory } from "@/lib/ai/errors";
+import { buildTailorSystemPrompt, buildTailorUserPrompt } from "./prompt";
+import { buildRetryFeedback } from "@/lib/ai/retry-feedback";
+import { logAiEvent } from "@/lib/ai/log";
 
 /**
  * Resume tailoring orchestration (M5). Pure AI concern — auth, input validation, rate

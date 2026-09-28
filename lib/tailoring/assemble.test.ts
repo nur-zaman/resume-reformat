@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { AiTailorSchema, type AiTailorOutput } from "./tailor-schema";
-import { assembleTailoredResult } from "./tailor-assemble";
-import { validateGenerationResult } from "./validate";
-import { collectContentIds } from "./invariants";
-import { newId } from "./ids";
-import { bulletsToRichText } from "./richtext-build";
-import { CURRENT_SCHEMA_VERSION } from "./version";
-import type { Block, ResumeDoc } from "./schema";
+import { AiTailorSchema, type AiTailorOutput } from "./schema";
+import { assembleTailoredResult } from "./assemble";
+import { validateGenerationResult } from "@/lib/resume/validate";
+import { collectContentIds } from "@/lib/resume/invariants";
+import { newId } from "@/lib/resume/ids";
+import { bulletsToRichText } from "@/lib/resume/richtext-build";
+import { CURRENT_SCHEMA_VERSION } from "@/lib/resume/version";
+import type { Block, ResumeDoc } from "@/lib/resume/schema";
 
 // --- builders --------------------------------------------------------------
 

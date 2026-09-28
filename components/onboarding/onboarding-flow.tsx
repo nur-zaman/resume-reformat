@@ -12,11 +12,8 @@ import {
   type GenerationResult,
   type ResumeDoc,
 } from "@/lib/resume";
-import {
-  parseResumeAction,
-  createResume,
-  type ParseResumeState,
-} from "@/lib/resume/actions";
+import { createResume } from "@/lib/resume/actions";
+import { parseResumeAction, type ParseResumeState } from "@/lib/parsing/actions";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

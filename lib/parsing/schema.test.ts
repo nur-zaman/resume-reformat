@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AiParseSchema } from "./parse-schema";
+import { AiParseSchema } from "./schema";
 
 /** A complete, minimal-but-valid model output (every field present). */
 const complete = {

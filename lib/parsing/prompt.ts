@@ -70,4 +70,4 @@ export function buildParsePdfPrompt(): string {
 }
 
 // The single-retry feedback builder is shared with the tailor pipeline (FR-13).
-export { buildRetryFeedback } from "./retry-feedback";
+export { buildRetryFeedback } from "@/lib/ai/retry-feedback";

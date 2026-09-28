@@ -1,17 +1,17 @@
 import "server-only";
 import { generateObject, type ModelMessage } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { AiParseSchema, type AiParseOutput } from "@/lib/resume/parse-schema";
-import { getAiConfig } from "./config";
-import { parseKnobs } from "./generation-config";
-import { classifyAiError, type AiErrorCategory } from "./errors";
+import { AiParseSchema, type AiParseOutput } from "./schema";
+import { getAiConfig } from "@/lib/ai/config";
+import { parseKnobs } from "@/lib/ai/generation-config";
+import { classifyAiError, type AiErrorCategory } from "@/lib/ai/errors";
 import {
   buildParseSystemPrompt,
   buildParseUserPrompt,
   buildParsePdfPrompt,
   buildRetryFeedback,
-} from "./parse-prompt";
-import { logAiEvent } from "./log";
+} from "./prompt";
+import { logAiEvent } from "@/lib/ai/log";
 
 /**
  * Resume parse orchestration (M4). Pure AI concern — auth, input validation, and assembly

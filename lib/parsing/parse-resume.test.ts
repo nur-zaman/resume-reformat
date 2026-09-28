@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { AiParseSchema, type AiParseOutput } from "@/lib/resume/parse-schema";
+import { AiParseSchema, type AiParseOutput } from "./schema";
 import {
   parseResume,
   type GenerateObjectFn,
   type ParseSource,
 } from "./parse-resume";
-import { AiError } from "./errors";
+import { AiError } from "@/lib/ai/errors";
 
 const sample: AiParseOutput = AiParseSchema.parse({
   header: { name: "Sample", headline: "", contacts: [], links: [] },

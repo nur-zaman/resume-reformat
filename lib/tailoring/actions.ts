@@ -2,11 +2,11 @@
 
 import { clientIp } from "@/lib/http/client-ip";
 import { authorize } from "@/lib/auth/guards";
-import { tailorResume } from "@/lib/ai/tailor-resume";
+import { tailorResume } from "./tailor-resume";
 import type { AiErrorCategory } from "@/lib/ai/errors";
 import { logAiEvent } from "@/lib/ai/log";
 import { enforceGenerationRateLimit } from "@/lib/ratelimit";
-import { assembleTailoredResult } from "@/lib/resume/tailor-assemble";
+import { assembleTailoredResult } from "./assemble";
 import { validateGenerationResult } from "@/lib/resume/validate";
 import { resolveStoredResume } from "@/lib/resume/load";
 import { validateJobDescriptionInput, MAX_JD_INPUT_CHARS } from "@/lib/resume/input";

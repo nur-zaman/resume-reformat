@@ -1,13 +1,13 @@
-import { newId } from "./ids";
-import { CURRENT_SCHEMA_VERSION } from "./version";
-import { isAllowedUrl } from "./richtext";
+import { newId } from "@/lib/resume/ids";
+import { CURRENT_SCHEMA_VERSION } from "@/lib/resume/version";
+import { isAllowedUrl } from "@/lib/resume/richtext";
 import {
   createContactItem,
   createEducationEntry,
   createExperienceEntry,
   createLink,
   createSkillCategory,
-} from "./factory";
+} from "@/lib/resume/factory";
 import {
   bulletsToRichText,
   cleanStrings,
@@ -15,7 +15,7 @@ import {
   experienceEntryHasContent,
   isEmptyDoc,
   paragraphsToRichText,
-} from "./richtext-build";
+} from "@/lib/resume/richtext-build";
 import type {
   Block,
   ContactItem,
@@ -24,8 +24,8 @@ import type {
   GenerationResult,
   Link,
   SkillCategory,
-} from "./schema";
-import type { AiParseOutput } from "./parse-schema";
+} from "@/lib/resume/schema";
+import type { AiParseOutput } from "./schema";
 
 /**
  * Deterministically build the canonical `GenerationResult` from the lean AI output

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { AiParseSchema, type AiParseOutput } from "./parse-schema";
+import { AiParseSchema, type AiParseOutput } from "./schema";
 import { assembleResumeDoc } from "./assemble";
-import { validateParseResult } from "./validate";
-import { CURRENT_SCHEMA_VERSION } from "./version";
-import type { Block } from "./schema";
-import type { RichText } from "./richtext";
+import { validateParseResult } from "@/lib/resume/validate";
+import { CURRENT_SCHEMA_VERSION } from "@/lib/resume/version";
+import type { Block } from "@/lib/resume/schema";
+import type { RichText } from "@/lib/resume/richtext";
 
 /**
  * Build a complete `AiParseOutput` from a partial. The lean schema is now REQUIRED

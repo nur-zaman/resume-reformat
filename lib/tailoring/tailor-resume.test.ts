@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { AiTailorSchema, type AiTailorOutput } from "@/lib/resume/tailor-schema";
+import { AiTailorSchema, type AiTailorOutput } from "./schema";
 import { createEmptyResumeDoc } from "@/lib/resume/factory";
 import {
   tailorResume,
   type GenerateTailorFn,
   type TailorInput,
 } from "./tailor-resume";
-import { AiError } from "./errors";
+import { AiError } from "@/lib/ai/errors";
 
 const sample: AiTailorOutput = AiTailorSchema.parse({
   headline: "",
