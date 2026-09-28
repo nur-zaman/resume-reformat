@@ -5,12 +5,6 @@ import { loadResumeForExport } from "@/lib/resume/actions";
 import { formatDateForFilename, resumeFileName } from "@/lib/render/filename";
 import { actionPrimary } from "@/components/ui/styles";
 
-/**
- * One-click PDF export for a Ready tailored job. The doc is fetched on demand and the react-pdf
- * engine is dynamically imported only when the user clicks — so it never weighs down the
- * dashboard bundle and never runs on the server (it's browser-only). The blob is built and
- * downloaded locally; nothing is uploaded, matching the in-editor export contract (FR-30).
- */
 export function ExportButton({ id, label = "Export" }: { id: string; label?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +18,7 @@ export function ExportButton({ id, label = "Export" }: { id: string; label?: str
         setError(res.message);
         return;
       }
+      // Dynamic import: keeps react-pdf (browser-only) out of the server bundle.
       const [{ pdf }, { ResumePdf }] = await Promise.all([
         import("@react-pdf/renderer"),
         import("@/components/preview/pdf/resume-pdf"),

@@ -39,8 +39,6 @@ export default function Home() {
   );
 }
 
-/* ------------------------------------------------------------------ Hero -- */
-
 function Hero() {
   return (
     <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-5 pb-20 pt-14 sm:px-8 lg:grid-cols-2 lg:gap-12 lg:pb-28 lg:pt-20">
@@ -92,8 +90,6 @@ function Hero() {
   );
 }
 
-/* ----------------------------------------------------------- How it works -- */
-
 const STEPS = [
   {
     icon: ClipboardIcon,
@@ -127,7 +123,6 @@ function HowItWorks() {
         </Reveal>
 
         <div className="relative mt-14">
-          {/* Connecting track behind the step numbers (desktop only). */}
           <div
             aria-hidden="true"
             className="absolute left-[16%] right-[16%] top-6 hidden h-px bg-hairline md:block"
@@ -151,8 +146,6 @@ function HowItWorks() {
     </section>
   );
 }
-
-/* -------------------------------------------------------------- Fact-check -- */
 
 function FactCheck() {
   return (
@@ -193,8 +186,6 @@ function FactCheck() {
   );
 }
 
-/* ---------------------------------------------------------------- Features -- */
-
 function Features() {
   return (
     <section id="features" className="scroll-mt-24 border-t border-hairline">
@@ -206,7 +197,6 @@ function Features() {
         </Reveal>
 
         <div className="mt-12 grid grid-cols-1 gap-4 [grid-auto-flow:dense] sm:grid-cols-2 lg:grid-cols-4 lg:auto-rows-[208px]">
-          {/* Hero cell */}
           <Reveal className="sm:col-span-2 sm:row-span-2">
             <article className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-hairline bg-surface-card p-6">
               <div
@@ -290,8 +280,6 @@ function FeatureCell({
   );
 }
 
-/* --------------------------------------------------------------------- FAQ -- */
-
 const FAQS = [
   {
     q: "Is it really invite-only?",
@@ -354,8 +342,6 @@ function Faq() {
   );
 }
 
-/* --------------------------------------------------------------- CTA band -- */
-
 function CtaBand() {
   return (
     <section id="waitlist" className="scroll-mt-24 px-5 py-20 sm:px-8 lg:py-28">
@@ -375,8 +361,6 @@ function CtaBand() {
     </section>
   );
 }
-
-/* ------------------------------------------------------------------ Footer -- */
 
 function SiteFooter() {
   return (

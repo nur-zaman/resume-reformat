@@ -6,16 +6,6 @@ import { cn } from "@/lib/utils/cn";
 
 const initialState: WaitlistState = { status: "idle" };
 
-/**
- * Waitlist email capture, bound to the `joinWaitlist` server action via `useActionState`.
- * Two tones: "dark" for near-black surfaces (hero) and "onYellow" for the full-bleed yellow
- * CTA band. The input + button fuse into one pill on desktop and stack on mobile.
- *
- * Accessibility: the label is always present (sr-only), the status line is an aria-live
- * region (assertive for errors, polite otherwise), the input flips aria-invalid + describes
- * itself by the message on error, and the button reserves its width so it never jumps
- * between idle/submitting. The honeypot field is hidden from everyone but bots.
- */
 export function WaitlistForm({
   tone = "dark",
   className,
@@ -76,8 +66,7 @@ export function WaitlistForm({
               : "border border-hairline bg-surface-card text-ink placeholder:text-muted sm:border-0",
           )}
         />
-        {/* Honeypot: present in the DOM for bots, hidden from people + assistive tech and
-            kept out of the tab order. `sr-only` clips it without affecting layout. */}
+        {/* Honeypot: hidden from people and assistive tech, present for bots. */}
         <input
           type="text"
           name="company_website"

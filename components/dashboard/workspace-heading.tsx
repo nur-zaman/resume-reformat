@@ -1,9 +1,3 @@
-/**
- * The dashboard's page heading — WORKSPACE eyebrow, display title, and one-line description.
- * Shared by the live page and the route loading skeleton so the two never drift. The
- * right-hand `action` slot carries the "New tailoring" control (or a static placeholder in
- * the skeleton).
- */
 export function WorkspaceHeading({ action }: { action?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-6">

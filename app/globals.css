@@ -1,53 +1,39 @@
 @import "tailwindcss";
 
-/*
- * Design tokens — sourced from DESIGN.md (ClickHouse-style electric-yellow on
- * near-black). Tailwind v4 generates utilities from these (bg-canvas, text-primary,
- * rounded-lg, font-mono, ...). Dark application chrome is the default surface; the
- * `paper-*` group is the light resume surface, reserved for the M3 preview/PDF.
- */
 @theme {
-  /* Surfaces */
   --color-canvas: #0a0a0a;
   --color-surface-soft: #121212;
   --color-surface-card: #1a1a1a;
   --color-surface-elevated: #242424;
 
-  /* Brand */
   --color-primary: #faff69;
   --color-primary-active: #e6eb52;
   --color-primary-disabled: #3a3a1f;
   --color-on-primary: #0a0a0a;
 
-  /* Text */
   --color-ink: #ffffff;
   --color-body: #cccccc;
   --color-body-strong: #e6e6e6;
   --color-muted: #888888;
   --color-muted-soft: #5a5a5a;
 
-  /* Lines */
   --color-hairline: #2a2a2a;
   --color-hairline-strong: #3a3a3a;
 
-  /* Semantic */
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-accent-blue: #3b82f6;
 
-  /* Resume paper surface — reserved for M3 (HTML preview + PDF) */
   --color-paper: #ffffff;
   --color-paper-ink: #1a1a1a;
 
-  /* Type */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "JetBrains Mono", monospace;
-  /* Printed-resume serif (HTML preview surface; PDF registers matching TTFs). */
+  /* Must match the family registered in lib/render/pdf-fonts.ts for PDF export. */
   --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
 
-  /* Radii */
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -65,13 +51,7 @@ body {
   font-family: var(--font-sans);
 }
 
-/*
- * Custom scrollbars — the OS default (chunky light-gray) clashes with the dark
- * chrome. Render a thin, low-contrast bar that recedes until hovered. Firefox +
- * modern engines read the standard properties; WebKit/Blink use the pseudo-element
- * rules below. The light resume paper sheet never scrolls itself (its dark pane
- * does), so applying this globally is safe.
- */
+/* Firefox reads the standard scrollbar-* properties; WebKit/Blink need the pseudo-elements below. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-hairline-strong) transparent;
@@ -89,8 +69,6 @@ body {
 ::-webkit-scrollbar-thumb {
   background-color: var(--color-hairline-strong);
   border-radius: var(--radius-pill);
-  /* Transparent border + background-clip insets the thumb so it reads as a
-     floating pill rather than a full-width bar. */
   border: 2px solid transparent;
   background-clip: padding-box;
 }
@@ -103,25 +81,12 @@ body {
   background: transparent;
 }
 
-/* Accessible, brand-consistent focus ring for keyboard users (PRD a11y). */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
 
-/* ===========================================================================
- * Landing page — decorative background, scroll progress, and scroll reveals.
- *
- * Everything here is the marketing surface only (`app/page.tsx`). Each background
- * layer is purely decorative (the markup is aria-hidden + pointer-events:none) and
- * all motion is opt-in: it lives behind prefers-reduced-motion and, for the newest
- * CSS, an @supports gate. Colours reference the @theme tokens above so the page
- * stays inside the design system. No JS animation library is involved.
- * =========================================================================== */
-
-/* Fixed stack of decorative layers, pinned behind the page content (which sits in a
- * `relative z-10` wrapper). Keeps the canvas colour so there is never a flash. */
 .lp-backdrop {
   position: fixed;
   inset: 0;
@@ -131,8 +96,6 @@ body {
   background-color: var(--color-canvas);
 }
 
-/* Engineered grid texture (Linear/Vercel-style), masked so it dissolves toward the
- * edges and never competes with copy. Drifts diagonally over 40s for subliminal life. */
 .lp-grid {
   position: absolute;
   inset: -2px;
@@ -144,8 +107,6 @@ body {
   mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, #000 50%, transparent 100%);
 }
 
-/* Soft brand-coloured glows. `screen` blends them additively onto the near-black base
- * so they read as emitted light rather than painted shapes. */
 .lp-blob {
   position: absolute;
   border-radius: var(--radius-pill);
@@ -177,8 +138,6 @@ body {
   );
 }
 
-/* Grain overlay — tiny SVG fractal noise. Its real job is to break up the colour
- * banding that big blurred dark gradients produce on near-black. Never animated. */
 .lp-grain {
   position: absolute;
   inset: 0;
@@ -187,9 +146,7 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Thin scroll-progress bar in brand yellow, driven entirely by the scroll position via
- * a CSS scroll timeline — no JS, runs off the main thread. Non-supporting browsers
- * (stable Firefox today) simply show nothing, which is fine for a decorative indicator. */
+/* CSS scroll-timeline animation; browsers without support just show no progress bar. */
 .lp-progress {
   position: fixed;
   inset: 0 0 auto 0;
@@ -242,11 +199,8 @@ body {
     }
   }
 
-  /* Scroll reveal. The data-reveal attribute is ONLY ever applied by JS (the <Reveal>
-   * island sets "hidden" before paint, then "shown" on intersection), so server-rendered,
-   * no-JS and reduced-motion output carries no attribute and stays fully visible — content
-   * is never gated on a transition. The transition lives on "shown" only, so entering the
-   * "hidden" state is instant (no fade-out flicker); the move into "shown" animates. */
+  /* data-reveal is only ever set by <Reveal>'s JS, so no-JS/reduced-motion output has no
+   * attribute and stays visible by default. */
   [data-reveal="hidden"] {
     opacity: 0;
     transform: translateY(var(--reveal-y, 22px));
@@ -260,9 +214,6 @@ body {
   }
 }
 
-/* Global safety net: neutralize any stray decorative motion for reduced-motion users.
- * Reveal content stays visible (its hidden state is gated above), so this only strips
- * movement, never information. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

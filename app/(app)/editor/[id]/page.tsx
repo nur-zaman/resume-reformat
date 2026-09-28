@@ -10,12 +10,6 @@ import { getResume } from "@/lib/resume/queries";
 import { LoadError } from "@/components/ui/load-error";
 import { ResumeWorkspace } from "@/components/editor/resume-workspace";
 
-/**
- * Edit one of the user's resumes. Loads `public.resumes` scoped by id + owner (RLS is the
- * real boundary). A missing/foreign id → back to the dashboard; a stored doc that fails
- * validation → a first-class load-error state that never overwrites the stored value
- * (FR-8); otherwise seed the editor.
- */
 export default async function EditorPage({
   params,
 }: {
@@ -39,8 +33,7 @@ export default async function EditorPage({
     );
   }
 
-  // Persisted proposals seed the review queue. Validate them against the resolved doc and
-  // drop them defensively if they no longer line up — never block editing on bad metadata.
+  // Defensive: drop stale review items rather than blocking editing on bad metadata.
   const kind: ResumeKind = data.kind === "tailored" ? "tailored" : "base";
   let reviewItems: ReviewItem[] = [];
   if (kind === "tailored") {

@@ -8,12 +8,6 @@ import { ResumeDocument } from "@/components/preview/resume-document";
 import { PdfExport } from "@/components/preview/pdf/pdf-export";
 import { actionSecondary } from "@/components/ui/styles";
 
-/**
- * Read-only preview of one resume — the canonical HTML sheet (same template as the editor's
- * live pane) plus a PDF download. Loaded scoped by id + owner (RLS is the real boundary). A
- * missing/foreign id returns to the dashboard; a doc that can't be read shows a first-class
- * load error without touching the stored value (FR-8).
- */
 export default async function PreviewPage({
   params,
 }: {

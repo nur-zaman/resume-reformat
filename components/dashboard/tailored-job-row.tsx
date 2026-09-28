@@ -15,16 +15,9 @@ export type TailoredJob = {
   updatedLabel: string;
 };
 
-/** Shared 4-column template so the column header and every row stay aligned (desktop only). */
 export const JOB_COLS = "md:grid-cols-[minmax(0,1fr)_140px_132px_216px]";
 const JOB_GRID = `md:grid ${JOB_COLS} md:items-center md:gap-4`;
 
-/**
- * One tailored resume as a document (open / export / review status). Application tracking — the
- * stage pipeline, dates, and notes — lives on the dedicated Job Tracker page, not here. Open
- * always works; Export is enabled only once the resume is Ready, mirroring the in-editor export
- * gate (FR-28). Rename / Duplicate / Delete sit in the overflow menu.
- */
 export function TailoredJobRow({ job }: { job: TailoredJob }) {
   const subtitle = [job.company, job.versionLabel].filter(Boolean).join(" · ");
 

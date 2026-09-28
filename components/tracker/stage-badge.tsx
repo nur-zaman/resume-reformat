@@ -1,12 +1,6 @@
 import { STAGE_LABELS, type ApplicationStage } from "@/lib/applications/stages";
 import { cn } from "@/lib/utils/cn";
 
-/**
- * Application-stage pill for a tailored job. Like `StatusBadge`, meaning never rests on color
- * alone (a11y): every stage carries its label plus a shape/icon cue. Electric yellow
- * (`primary`) is reserved for primary actions / the review state per DESIGN.md, so positive
- * stages use `success` instead — Offer and Accepted are distinguished by their label + icon.
- */
 const STAGE_STYLES: Record<ApplicationStage, string> = {
   none: "border-hairline bg-surface-elevated text-muted",
   applied: "border-hairline-strong bg-surface-elevated text-body-strong",
@@ -38,7 +32,6 @@ export function StageBadge({
 function StageIcon({ stage }: { stage: ApplicationStage }) {
   if (stage === "accepted") return <CheckIcon />;
   if (stage === "rejected") return <CrossIcon />;
-  // none = hollow dot (nothing yet); every active stage = filled dot.
   return (
     <span
       aria-hidden

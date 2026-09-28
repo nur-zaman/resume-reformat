@@ -7,16 +7,6 @@ import { createEmptyResumeDoc, DEFAULT_RESUME_TITLE } from "@/lib/resume";
 import { createResume } from "@/lib/resume/actions";
 import { Button } from "@/components/ui/button";
 
-/**
- * "New resume" control offering the two creation paths (confirmed with the owner): Import
- * (the paste/PDF onboarding flow) and Start blank (an empty doc created immediately, then
- * opened in the editor). A small menu keeps the dashboard header uncluttered; it closes on
- * outside-click and Escape.
- *
- * Creates a *base* resume. `variant="ghost"` renders a quiet text trigger for the BASE RESUME
- * section header (where "New tailoring" is the loud CTA); the default yellow trigger anchors
- * the empty state.
- */
 export function NewResumeButton({
   variant = "primary",
   label = "New resume",

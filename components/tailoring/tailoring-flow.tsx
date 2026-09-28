@@ -19,13 +19,6 @@ import { TextInput } from "@/components/ui/text-input";
 import { ResumeEditor } from "@/components/editor/resume-editor";
 import type { SaveResult } from "@/components/editor/save-bar";
 
-/**
- * Tailoring flow (PRD §6.2). Mirrors onboarding: the "paste job description" phase and the
- * "review" phase live in one client component so the generated draft is held in memory and
- * never has to survive a navigation. On save it becomes a new `tailored` resume row — carrying
- * the job metadata + reviewed proposals — that surfaces in the dashboard's "Tailored jobs"
- * table. `useActionState` lives inside the paste phase so Start over resets cleanly.
- */
 type JobMeta = { title: string; company: string };
 type Phase =
   | { name: "paste" }
@@ -76,8 +69,7 @@ function PastePhase({
     initialTailorState,
   );
 
-  // Advance to review once generation succeeds. This component then unmounts, so the
-  // success state cannot re-fire; a later Start over remounts it fresh (idle).
+  // This component unmounts on success, so this effect can't re-fire with stale state.
   useEffect(() => {
     if (state.status === "success") onGenerated(state.result, state.job);
   }, [state, onGenerated]);
@@ -211,9 +203,6 @@ function ReviewPhase({
     return label ? `${name} — ${label}` : name;
   }
 
-  // Both paths now persist the tailored resume — and its proposals — so it appears as a
-  // "Tailored job" on the dashboard (no longer lost on navigation). "Finish" resolves to a
-  // ready/review status from what's pending; "Save as draft" parks it for later review.
   function persist(intent: "finalize" | "draft") {
     return async (doc: ResumeDoc, reviewItems: ReviewItem[]): Promise<SaveResult> => {
       const result = await createResume({

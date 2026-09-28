@@ -11,7 +11,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Metadata only — never log resume/JD content or tokens (PRD §11).
+    // Log metadata only — never log resume/JD content or tokens.
     console.error("Render error", error.digest);
   }, [error]);
 

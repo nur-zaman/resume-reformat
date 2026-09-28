@@ -12,8 +12,7 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-// The printed-resume serif. Drives the HTML preview surface; the PDF registers the
-// matching static TTFs (lib/render/pdf-fonts.ts) under the same family name.
+// Must keep this family name in sync with the static TTFs registered in lib/render/pdf-fonts.ts.
 const sourceSerif = Source_Serif_4({
   variable: "--font-source-serif",
   subsets: ["latin"],
@@ -23,9 +22,6 @@ const sourceSerif = Source_Serif_4({
 const APP_NAME = "Resume Reformatter";
 const APP_DESCRIPTION = "Tailor your resume to any job, privately.";
 
-// The colocated app/icon, app/apple-icon, app/opengraph-image and app/twitter-image files wire
-// up the favicon, app icon and social-preview image automatically. `metadataBase` lets Next
-// resolve those into absolute URLs for OG/Twitter cards.
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
   title: APP_NAME,

@@ -5,13 +5,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Wordmark } from "@/components/ui/wordmark";
 import { AppNav } from "@/components/app-nav";
 
-/**
- * Protected shell. Server-side guard branches three ways:
- *  - unauthenticated -> redirect to /login (the proxy also does this for UX)
- *  - authenticated but not allowlisted -> clear access-denied state
- *  - allowed -> render the app chrome
- * This is a server boundary, but RLS remains the final guarantee for data access.
- */
+// This guard is UX; RLS remains the final security boundary for data access.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = await getAuthState();
 

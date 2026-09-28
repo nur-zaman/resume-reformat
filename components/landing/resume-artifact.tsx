@@ -1,16 +1,6 @@
-/**
- * The hero's proof-by-artifact: a real rendered resume page (the product's actual output —
- * white "paper" surface, Source Serif type, the same tokens the PDF/preview use) framed in a
- * dark app window, with two floating overlays that name the two things that make the product
- * different — it tailors to a specific role, and it fact-checks every claim.
- *
- * Decorative and self-explanatory in the surrounding copy, so the inner detail is aria-hidden
- * to avoid read-out noise; the window keeps one honest label for context.
- */
 export function ResumeArtifact() {
   return (
     <div className="relative">
-      {/* App window frame */}
       <figure className="overflow-hidden rounded-lg border border-hairline bg-surface-card shadow-2xl shadow-black/40">
         <div className="flex items-center gap-2 border-b border-hairline px-4 py-3">
           <span className="size-3 rounded-pill bg-hairline-strong" />
@@ -19,7 +9,6 @@ export function ResumeArtifact() {
           <span className="ml-2 font-mono text-xs text-muted">alex-rivera · senior-pm.pdf</span>
         </div>
 
-        {/* The paper sheet */}
         <div className="bg-surface-soft p-4 sm:p-6">
           <div className="mx-auto max-w-sm rounded-sm bg-paper px-7 py-7 font-serif text-paper-ink" aria-hidden="true">
             <header className="text-center">
@@ -65,7 +54,6 @@ export function ResumeArtifact() {
         </div>
       </figure>
 
-      {/* Floating overlays */}
       <div className="absolute -right-3 -top-4 flex items-center gap-2 rounded-pill border border-hairline bg-surface-elevated px-3 py-1.5 shadow-lg shadow-black/40 sm:-right-6">
         <span className="flex size-4 items-center justify-center rounded-pill bg-success/15">
           <svg viewBox="0 0 20 20" fill="none" className="size-3 text-success" aria-hidden="true">

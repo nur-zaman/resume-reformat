@@ -20,12 +20,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ResumeEditor } from "@/components/editor/resume-editor";
 import type { SaveResult } from "@/components/editor/save-bar";
 
-/**
- * First-time base-resume setup (PRD §6.1). Two phases live in one client component so the
- * parsed draft is held in memory and never has to survive a navigation. `useActionState`
- * lives inside the paste phase so returning to it (Start over) resets cleanly rather than
- * re-triggering a stale "success".
- */
 type Phase = { name: "paste" } | { name: "review"; draft: GenerationResult };
 
 export function OnboardingFlow() {
@@ -57,8 +51,7 @@ function PastePhase({ onParsed }: { onParsed: (draft: GenerationResult) => void 
     initialParseState,
   );
 
-  // Advance to review once parsing succeeds. This component then unmounts, so the
-  // success state cannot re-fire; a later Start over remounts it fresh (idle).
+  // This component unmounts on success, so this effect can't re-fire with stale state.
   useEffect(() => {
     if (state.status === "success") onParsed(state.result);
   }, [state, onParsed]);
@@ -74,8 +67,7 @@ function PastePhase({ onParsed }: { onParsed: (draft: GenerationResult) => void 
   function switchMode(next: InputMode) {
     if (next === mode) return;
     setMode(next);
-    // Keep the typed text (cheap to preserve), but drop any chosen file so the visible
-    // state and the (remounted, empty) file input never disagree.
+    // Drop the file (not the text) so visible state matches the remounted, empty file input.
     setFile(null);
     setFileError(null);
   }

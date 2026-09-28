@@ -11,11 +11,6 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-/**
- * Sticky landing header. Transparent over the hero, then condenses to a blurred,
- * hairline-bordered bar once the page scrolls — a small but high-signal "you've left the
- * top" cue. The scroll listener is passive and rAF-throttled so it never janks scrolling.
- */
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
 

@@ -4,11 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 
-/**
- * Primary app navigation in the protected header. Two destinations over the same data: the
- * Workspace (resumes as editable documents) and the Job Tracker (those tailored resumes as a
- * job-application pipeline). The active link is highlighted and marked `aria-current`.
- */
 const LINKS = [
   { href: "/dashboard", label: "Workspace" },
   { href: "/tracker", label: "Job Tracker" },

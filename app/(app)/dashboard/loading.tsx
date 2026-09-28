@@ -5,12 +5,8 @@ import {
 } from "@/components/dashboard/skeletons";
 import { sectionLabel } from "@/components/ui/styles";
 
-/**
- * Route-level loading state for the dashboard (screenshot 2). The page heading renders for
- * real so the workspace feels instant; the data bands stream in behind skeletons. The
- * "AI paused" banner is intentionally omitted here — it's conditional, and showing it
- * unconditionally would flash for users who aren't actually paused.
- */
+// The AI-paused banner is omitted here (it's conditional) so it doesn't flash for
+// users who aren't actually paused.
 export default function DashboardLoading() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-12">

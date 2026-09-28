@@ -3,11 +3,6 @@
 import { useEffect, useRef } from "react";
 import { Button } from "./button";
 
-/**
- * Accessible confirmation for destructive actions (DESIGN.md: destructive actions require
- * clear labels + confirmation). Built on the native `<dialog>` element so focus-trapping
- * and Esc-to-close come for free; styled with the app tokens. Controlled via `open`.
- */
 export function ConfirmDialog({
   open,
   title,

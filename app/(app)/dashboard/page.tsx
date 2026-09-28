@@ -19,12 +19,6 @@ import { TailoredJobs } from "@/components/dashboard/tailored-jobs";
 import type { TailoredJob } from "@/components/dashboard/tailored-job-row";
 import { sectionLabel } from "@/components/ui/styles";
 
-/**
- * Authenticated home — the workspace. One band for the user's BASE RESUME(s) (edited
- * directly) and one for their TAILORED JOBS (resumes adapted to a specific role, each with a
- * review status + version count). An "AI paused" banner appears only while the per-hour
- * generation quota is spent. All of the prior CRUD survives in each card's overflow menu.
- */
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -122,15 +116,12 @@ function BaseResumeEmptyState() {
   );
 }
 
-// --- Row → view-model helpers -------------------------------------------------
-
 function headerBlock(doc: ResumeDoc): Extract<Block, { type: "header" }> | undefined {
   return doc.blocks.find(
     (b): b is Extract<Block, { type: "header" }> => b.type === "header",
   );
 }
 
-/** A resume's display name: the header name when set, otherwise its stored title. */
 function resumeName(row: ResumeSummaryRow): string {
   const resolved = resolveStoredResume(row.doc);
   if (resolved.kind === "ok") {

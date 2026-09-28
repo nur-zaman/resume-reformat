@@ -4,11 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-/**
- * Primary dashboard CTA. Tailoring always starts from a base resume, so this resolves which
- * one: with a single base it links straight to its tailor flow; with several it opens a picker;
- * with none it's disabled (you need a base resume first — the BASE RESUME section creates one).
- */
 export type TailorBase = { id: string; label: string };
 
 export function NewTailoringButton({ bases }: { bases: TailorBase[] }) {

@@ -2,12 +2,6 @@ import Link from "next/link";
 import { actionSecondary } from "@/components/ui/styles";
 import { ResumeActionsMenu } from "./resume-actions-menu";
 
-/**
- * The featured base-resume card: identity (initials avatar, name, headline), a glanceable
- * section list + last-updated stamp, and the primary actions (Preview, Edit). Rename /
- * Duplicate / Delete / Tailor live in the overflow menu so nothing is lost from the old
- * per-card action set. A server component; only the menu is a client island.
- */
 export function BaseResumeCard({
   id,
   name,

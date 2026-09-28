@@ -1,7 +1,5 @@
 import { JOB_COLS } from "./tailored-job-row";
 
-/** Loading placeholders for the dashboard's data bands (route `loading.tsx`, screenshot 2). */
-
 function Bar({ className }: { className?: string }) {
   return <span className={`block rounded bg-surface-elevated ${className ?? ""}`} />;
 }

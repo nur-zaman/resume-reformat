@@ -2,11 +2,6 @@ import Link from "next/link";
 import { applicationStats, type ApplicationStats } from "@/lib/applications/stages";
 import { ApplicationRow, type ApplicationView, APP_COLS } from "./application-row";
 
-/**
- * The Job Tracker list: a pipeline summary, an aligned column header (desktop only), and a
- * stack of application rows — or an empty state pointing back to tailoring. Each tailored
- * resume is one application; stage/dates/notes are edited inline via each row's dialog.
- */
 export function ApplicationList({ apps }: { apps: ApplicationView[] }) {
   if (apps.length === 0) {
     return (
@@ -46,7 +41,6 @@ export function ApplicationList({ apps }: { apps: ApplicationView[] }) {
   );
 }
 
-/** Compact pipeline summary above the list (PRD-application-tracking §11). */
 function PipelineSummary({ stats }: { stats: ApplicationStats }) {
   const parts = [
     `${stats.active} active`,

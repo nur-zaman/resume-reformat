@@ -22,7 +22,6 @@ const variants: Record<Variant, string> = {
     "disabled:bg-error/40 disabled:text-muted",
 };
 
-/** Primary = electric-yellow CTA; secondary = dark surface. Per DESIGN.md. */
 export function Button({ variant = "primary", className, ...props }: ButtonProps) {
   return <button className={cn(base, variants[variant], className)} {...props} />;
 }

@@ -1,10 +1,5 @@
 import { TailoredJobRow, type TailoredJob, JOB_COLS } from "./tailored-job-row";
 
-/**
- * The "Tailored jobs" band: an aligned column header (desktop only) over a stack of job rows,
- * or a quiet empty state prompting the first tailoring. These are the tailored resumes as
- * documents; track them as job applications on the Job Tracker page.
- */
 export function TailoredJobs({ jobs }: { jobs: TailoredJob[] }) {
   if (jobs.length === 0) {
     return (

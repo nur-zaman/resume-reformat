@@ -16,13 +16,6 @@ import { TextInput } from "@/components/ui/text-input";
 import { Textarea } from "@/components/ui/textarea";
 import { StageBadge } from "./stage-badge";
 
-/**
- * The application tracker for one tailored job. The stage badge on the dashboard row is the
- * trigger; clicking it opens a native `<dialog>` (same pattern as `ConfirmDialog`/`RenameDialog`
- * — focus trap + Esc for free) to set the stage, applied / follow-up dates, posting URL, and
- * notes, and to see the stage timeline. Only changed fields are sent to `updateApplication`,
- * so an untouched applied date never overrides the stage-change auto-stamp (FR-AT-2).
- */
 export type ApplicationData = {
   id: string;
   role: string;
@@ -35,14 +28,11 @@ export type ApplicationData = {
   stageHistory: StageHistoryEntry[];
 };
 
-/** A stored timestamptz / ISO string → the `YYYY-MM-DD` a `<input type="date">` expects. */
 function toDateInput(value: string | null): string {
   return value ? value.slice(0, 10) : "";
 }
 
-// Pinned to UTC so the timeline date is identical on the server and after hydration — the
-// `at` instants are stored as UTC (`toISOString`), and a local-timezone format could render a
-// different calendar day on each side, tripping a hydration mismatch.
+// Pinned to UTC to avoid a hydration mismatch: local-timezone formatting could differ between server and client.
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
   month: "short",
@@ -91,8 +81,7 @@ function ApplicationDialog({
   const ref = useRef<HTMLDialogElement>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  // Today's date (YYYY-MM-DD), captured when the dialog opens — reading the clock during render
-  // is impure, so the due-date check below compares ISO date strings against this instead.
+  // Captured on open, not computed at render (render must stay pure).
   const [today, setToday] = useState("");
 
   const [stage, setStage] = useState<ApplicationStage>(data.stage);
@@ -101,9 +90,7 @@ function ApplicationDialog({
   const [jobUrl, setJobUrl] = useState(data.jobUrl ?? "");
   const [notes, setNotes] = useState(data.notes ?? "");
 
-  // Mirror `open` onto the native dialog. On each open, reset the fields to the latest props
-  // (the only branch that resets) so reopening after a save shows fresh values; while open,
-  // neither branch fires, so in-progress edits are never clobbered.
+  // Reset fields only when opening, so in-progress edits are never clobbered while the dialog stays open.
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
@@ -152,7 +139,7 @@ function ApplicationDialog({
   const followUpDue =
     followUpAt !== "" && today !== "" && !isClosedStage(stage) && followUpAt <= today;
 
-  const timeline = [...data.stageHistory].reverse(); // newest first
+  const timeline = [...data.stageHistory].reverse();
   const label = "block text-sm font-medium text-body-strong";
   const fieldNote = "mt-1 text-xs text-muted";
 

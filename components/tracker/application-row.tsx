@@ -13,7 +13,6 @@ export type ApplicationView = {
   id: string;
   role: string;
   company: string;
-  /** Resume readiness — still gates Export, mirroring the dashboard/editor export gate. */
   status: TailoredStatus;
   stage: ApplicationStage;
   appliedAt: string | null;
@@ -23,12 +22,10 @@ export type ApplicationView = {
   stageHistory: StageHistoryEntry[];
 };
 
-/** Shared 5-column template so the header and every row stay aligned (desktop only). */
 export const APP_COLS = "md:grid-cols-[minmax(0,1fr)_148px_104px_140px_168px]";
 const APP_GRID = `md:grid ${APP_COLS} md:items-center md:gap-4`;
 
-// Dates are stored as UTC instants / date strings; pin the formatter to UTC so the server
-// render is stable (no locale drift) and matches how the action stamps them.
+// Pinned to UTC: matches how dates are stored/stamped and keeps server rendering locale-stable.
 const DATE_FMT = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
   month: "short",
@@ -41,18 +38,12 @@ function formatDate(value: string | null): string {
   return Number.isNaN(t) ? "—" : DATE_FMT.format(new Date(t));
 }
 
-/** A follow-up is "due" once its date has passed and the application is still open. */
 function isFollowUpDue(followUpAt: string | null, stage: ApplicationStage): boolean {
   if (!followUpAt || isClosedStage(stage)) return false;
   const t = Date.parse(followUpAt);
   return !Number.isNaN(t) && t <= Date.now();
 }
 
-/**
- * One application on the Job Tracker. The stage badge (column 2) opens the tracking dialog; the
- * applied / follow-up dates are read-only summaries (edited in the dialog). Open jumps to the
- * editor; Export is enabled only once the resume is Ready (FR-28).
- */
 export function ApplicationRow({ app }: { app: ApplicationView }) {
   const due = isFollowUpDue(app.followUpAt, app.stage);
 

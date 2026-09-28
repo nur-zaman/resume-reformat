@@ -1,6 +1,5 @@
 import { signOut } from "@/lib/auth/actions";
 
-/** Server-action form — no client JS needed to end a session. */
 export function SignOutButton() {
   return (
     <form action={signOut}>

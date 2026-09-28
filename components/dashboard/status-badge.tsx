@@ -1,10 +1,6 @@
 import type { TailoredStatus } from "@/lib/resume";
 import { cn } from "@/lib/utils/cn";
 
-/**
- * Status pill for a tailored job. Three states, each with a non-color cue (icon + text) so the
- * meaning never rests on color alone (a11y): review (proposals pending) carries a count.
- */
 export function StatusBadge({
   status,
   pendingCount,

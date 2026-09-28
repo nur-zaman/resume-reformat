@@ -5,13 +5,6 @@ import { listApplications, type ApplicationRow } from "@/lib/resume/queries";
 import { ApplicationList } from "@/components/tracker/application-list";
 import type { ApplicationView } from "@/components/tracker/application-row";
 
-/**
- * Job Tracker — the application pipeline. Every tailored resume (kind='tailored') is one
- * application; this page is the dedicated home for its stage, dates, posting link, notes, and
- * timeline (the dashboard keeps the same resumes as editable documents). Scoped by owner; RLS
- * is the final boundary. Stage/date edits go through `updateApplication` and never touch the
- * resume document, so the two views stay independent.
- */
 function toView(row: ApplicationRow): ApplicationView {
   return {
     id: row.id,

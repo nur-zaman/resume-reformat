@@ -8,13 +8,6 @@ import { TextInput } from "@/components/ui/text-input";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-/**
- * The "⋯" overflow menu carried by every base-resume card and tailored-job row. Keeps the
- * full resume CRUD — Rename (dialog), Duplicate, Delete (confirm) — reachable from the
- * redesigned dashboard without cluttering each row with five buttons. Optional `links` (e.g.
- * "Tailor to a job") render above the mutating actions. Mutations run through the existing
- * server actions, then `router.refresh()` re-reads the list.
- */
 export function ResumeActionsMenu({
   id,
   title,

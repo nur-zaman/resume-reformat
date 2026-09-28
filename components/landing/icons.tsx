@@ -1,8 +1,3 @@
-/**
- * Minimal line-icon set for the landing page — 24px grid, 1.6 stroke, currentColor so each
- * icon inherits its container's text colour. Kept local to the landing surface; the app
- * chrome doesn't use an icon system yet.
- */
 type IconProps = { className?: string };
 
 const base = {

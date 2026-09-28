@@ -26,11 +26,6 @@ const ITEMS: ReviewItem[] = [
   },
 ];
 
-/**
- * The fact-check mechanism shown, not described: each claim the tailoring step proposes is
- * checked back against the source resume. Unsupported claims are flagged for the writer to
- * remove or correct before anything ships — the product never quietly invents a number.
- */
 export function FactCheckCard() {
   return (
     <div className="overflow-hidden rounded-lg border border-hairline bg-surface-card">
