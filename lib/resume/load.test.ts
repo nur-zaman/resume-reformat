@@ -4,9 +4,9 @@ import { emptyResume } from "./fixtures/empty-resume";
 import { realisticResume } from "./fixtures/realistic-resume";
 
 describe("resolveStoredResume", () => {
-  it("sends a user with no stored resume to onboarding", () => {
-    expect(resolveStoredResume(null)).toEqual({ kind: "redirect-onboarding" });
-    expect(resolveStoredResume(undefined)).toEqual({ kind: "redirect-onboarding" });
+  it("reports an error when no doc is stored", () => {
+    expect(resolveStoredResume(null)).toEqual({ kind: "error" });
+    expect(resolveStoredResume(undefined)).toEqual({ kind: "error" });
   });
 
   it("returns a valid stored resume", () => {
